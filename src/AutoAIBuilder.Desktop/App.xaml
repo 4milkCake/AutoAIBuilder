@@ -1,7 +1,6 @@
 <Application x:Class="AutoAIBuilder.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <Color x:Key="WindowColor">#07111E</Color>
         <Color x:Key="PanelColor">#0D1929</Color>

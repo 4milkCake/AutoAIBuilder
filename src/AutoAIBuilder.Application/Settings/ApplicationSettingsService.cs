@@ -16,6 +16,10 @@ public sealed class ApplicationSettingsService(IApplicationSettingsRepository re
         {
             return ApplicationSettings.CreateDefault();
         }
+        catch (InvalidDataException)
+        {
+            return ApplicationSettings.CreateDefault();
+        }
     }
 
     public ApplicationSettings Save(ApplicationSettings settings)

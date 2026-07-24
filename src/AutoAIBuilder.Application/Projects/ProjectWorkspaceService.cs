@@ -76,21 +76,6 @@ public sealed class ProjectWorkspaceService(IProjectRepository repository)
         return restoredProject;
     }
 
-    public ProjectWorkspace EnsureInitialProject()
-    {
-        var existing = GetProjects().FirstOrDefault();
-        if (existing is not null)
-        {
-            return existing;
-        }
-
-        return CreateProject(new CreateProjectRequest(
-            "Residencial Águas Claras",
-            "Residencial multifamiliar",
-            12,
-            96));
-    }
-
     public ProjectWorkspace RegisterFile(Guid projectId, string sourcePath)
     {
         return RegisterFiles(projectId, [sourcePath]);

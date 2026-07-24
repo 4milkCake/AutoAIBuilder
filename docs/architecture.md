@@ -58,8 +58,28 @@ na Infrastructure sem depender da janela WPF.
 
 Eventos de ciclo de vida, avisos, erros e exceções globais são registrados sem
 interromper a operação principal. A tela Diagnóstico exibe o estado do runtime,
-os caminhos locais, a integridade dos JSON e os últimos eventos.
+os caminhos locais, a integridade do banco SQLite, as fontes legadas e os
+últimos eventos.
 
-Um arquivo de projetos corrompido é apresentado como catálogo vazio somente
-para permitir que o aplicativo abra, mas permanece protegido contra
-sobrescrita até ser corrigido ou recuperado explicitamente.
+Um registro de projeto com conteúdo inválido é omitido do catálogo somente para
+permitir que o aplicativo abra, mas o banco permanece protegido contra novas
+gravações até que o conteúdo seja recuperado explicitamente.
+
+## Persistência e recuperação
+
+Os repositórios operacionais usam `Microsoft.Data.Sqlite` e um banco com versão
+de esquema registrada por `PRAGMA user_version` e `SchemaMigrations`. Cada
+operação de escrita é transacional, as conexões usam WAL e possuem tempo de
+espera para contenção.
+
+Os JSON das versões anteriores são tratados como fontes legadas. A migração é
+idempotente, registra cada origem em `DataMigrations` e preserva os arquivos
+originais sem renomear, mover ou excluir.
+
+`AppState` persiste a identidade do projeto ativo. Backups usam a API de backup
+online do SQLite; uma restauração sempre cria primeiro uma cópia automática do
+estado atual e tenta retornar a ela caso a operação falhe.
+
+A mudança de pasta de dados é agendada. O banco é validado no destino e, no
+próximo início, uma cópia final do estado mais recente é criada antes que o novo
+local seja ativado. A pasta anterior permanece intacta.

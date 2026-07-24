@@ -1,5 +1,6 @@
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
+using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
 using AutoAIBuilder.Application.Projects;
@@ -74,12 +75,36 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.IsFalse(viewModel.Navigation.Single(item => item.Label == "Máscaras").IsAvailable);
     }
 
+    [TestMethod]
+    public void EmptyStorage_DoesNotCreateDemonstrationProject()
+    {
+        var logger = new InMemoryDiagnosticLogger();
+        var viewModel = CreateViewModel(
+            logger,
+            new StubDiagnosticService(logger),
+            seedProject: false);
+
+        Assert.IsNull(viewModel.SelectedProject);
+        Assert.AreEqual(0, viewModel.Projects.Count);
+        Assert.AreEqual(0, viewModel.AvailableProjects.Count);
+        StringAssert.Contains(viewModel.StatusMessage, "Crie um projeto");
+    }
+
     private MainWindowViewModel CreateViewModel(
         IDiagnosticLogger logger,
-        IDiagnosticService diagnosticService)
+        IDiagnosticService diagnosticService,
+        bool seedProject = true)
     {
         var workspaceService = new ProjectWorkspaceService(
             new JsonProjectRepository(Path.Combine(_directory, "projects.json")));
+        if (seedProject)
+        {
+            workspaceService.CreateProject(new CreateProjectRequest(
+                "Projeto integrado",
+                "Residencial",
+                2,
+                4));
+        }
         var settingsService = new ApplicationSettingsService(
             new JsonApplicationSettingsRepository(Path.Combine(_directory, "settings.json")));
         var activityService = new ActivityLogService(
@@ -100,7 +125,8 @@ public sealed class MainWindowViewModelIntegrationTests
             new EmptyFilePicker(),
             new CancelledReportExportService(),
             new NoOpFileSystemLauncher(),
-            new RejectingDialogService());
+            new RejectingDialogService(),
+            new StubDataMaintenanceService(_directory));
     }
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger
@@ -146,6 +172,12 @@ public sealed class MainWindowViewModelIntegrationTests
     private sealed class EmptyFilePicker : IFilePickerService
     {
         public IReadOnlyList<string> PickProjectFiles() => [];
+
+        public string? PickDataBackupDestination(string suggestedFileName) => null;
+
+        public string? PickDataBackupSource() => null;
+
+        public string? PickDataDirectory(string currentDirectory) => null;
     }
 
     private sealed class CancelledReportExportService : IReportExportService
@@ -171,5 +203,36 @@ public sealed class MainWindowViewModelIntegrationTests
     private sealed class RejectingDialogService : IDialogService
     {
         public bool ConfirmRemoveFileReference(string fileName) => false;
+
+        public bool ConfirmRestoreDataBackup(string backupPath) => false;
+
+        public bool ConfirmDataDirectoryChange(
+            string currentDirectory,
+            string newDirectory) => false;
+    }
+
+    private sealed class StubDataMaintenanceService(string directory)
+        : IDataMaintenanceService
+    {
+        public string DataDirectory => directory;
+
+        public string DatabasePath => Path.Combine(directory, "test.db");
+
+        public string BackupDirectory => Path.Combine(directory, "Backups");
+
+        public int SchemaVersion => 1;
+
+        public DataBackupResult CreateBackup(string destinationPath) =>
+            new(destinationPath, DateTimeOffset.Now, 0);
+
+        public DataRestoreResult RestoreBackup(string sourcePath) =>
+            new(sourcePath, Path.Combine(directory, "safety.aabbackup"), DateTimeOffset.Now);
+
+        public DataRelocationResult RelocateDataDirectory(string destinationDirectory) =>
+            new(
+                directory,
+                destinationDirectory,
+                Path.Combine(destinationDirectory, "test.db"),
+                RequiresRestart: true);
     }
 }

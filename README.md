@@ -33,9 +33,15 @@ restauração, compilação e testes no Windows com o SDK definido em `global.js
 O shell permite navegar entre Painel, Projetos, Arquivos, Regras de projeto,
 Validadores, Relatórios, Histórico e Configurações. O projeto selecionado
 é tratado como projeto ativo e alimenta o cabeçalho, as métricas e a próxima ação
-do painel. Projetos são persistidos em
-`%LOCALAPPDATA%\AutoAIBuilder\Data\projects.json`; arquivos são catalogados por
-metadados e permanecem em seus locais originais.
+do painel. Projetos, configurações, histórico e o projeto ativo são persistidos
+no banco SQLite versionado
+`%LOCALAPPDATA%\AutoAIBuilder\Data\autoaibuilder.db`; arquivos são catalogados
+por metadados e permanecem em seus locais originais.
+
+Na primeira inicialização após a migração para SQLite, os antigos arquivos
+`projects.json`, `settings.json` e `activity-log.json` são importados de forma
+idempotente. Eles permanecem intactos como fonte legada e nunca são apagados
+automaticamente.
 
 A gestão de projetos permite criar, editar, duplicar, pesquisar, ordenar, arquivar
 e restaurar espaços de trabalho. O arquivamento é reversível e a duplicação
@@ -49,8 +55,8 @@ confirmação.
 As regras técnicas são persistidas por projeto e incluem unidade de medida,
 escala, altura de pavimento, nomenclatura e critérios de bloqueio para validações
 futuras. As configurações locais definem os valores padrão de novos projetos e a
-confirmação de segurança para remoção de referências. Elas são armazenadas em
-`%LOCALAPPDATA%\AutoAIBuilder\Data\settings.json`.
+confirmação de segurança para remoção de referências. Elas são armazenadas no
+mesmo banco SQLite transacional.
 
 Os validadores executam uma verificação preventiva e somente de leitura sobre
 dados cadastrais, regras técnicas, integridade do catálogo e catálogo de camadas.
@@ -64,9 +70,16 @@ para análise em planilhas. A exportação só grava depois da escolha explícit
 destino pelo usuário.
 
 O histórico local registra ações importantes do aplicativo, permite pesquisa e
-filtro por categoria e é limitado aos 500 eventos mais recentes. Ele é armazenado
-em `%LOCALAPPDATA%\AutoAIBuilder\Data\activity-log.json`; falhas no histórico não
-interrompem a operação principal.
+filtro por categoria e é limitado aos 500 eventos mais recentes. Ele também usa
+o banco SQLite; falhas no histórico não interrompem a operação principal.
+
+A tela Configurações permite criar backups consistentes, restaurá-los com uma
+cópia automática do estado anterior e escolher oficialmente outra pasta de
+dados. A realocação preserva o banco original, refaz a cópia final no próximo
+início e nunca reinicia o computador ou o aplicativo automaticamente.
+
+Somente uma instância do AutoAIBuilder pode permanecer aberta por sessão do
+Windows, evitando gravações concorrentes por duas janelas.
 
 A interface fornece notificações globais acessíveis, foco visível por teclado,
 contraste reforçado e atalhos `Ctrl+1` a `Ctrl+7` para as áreas principais,

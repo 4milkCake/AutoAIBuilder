@@ -2,7 +2,14 @@ namespace AutoAIBuilder.Application.Projects;
 
 public sealed class ActiveProjectContext
 {
+    private readonly IActiveProjectStateRepository? _repository;
     private Guid? _projectId;
+
+    public ActiveProjectContext(IActiveProjectStateRepository? repository = null)
+    {
+        _repository = repository;
+        _projectId = repository?.Load();
+    }
 
     public event EventHandler? Changed;
 
@@ -21,6 +28,7 @@ public sealed class ActiveProjectContext
         }
 
         _projectId = projectId;
+        _repository?.Save(projectId);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -32,6 +40,24 @@ public sealed class ActiveProjectContext
         }
 
         _projectId = null;
+        _repository?.Save(null);
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Reload()
+    {
+        if (_repository is null)
+        {
+            return;
+        }
+
+        var projectId = _repository.Load();
+        if (_projectId == projectId)
+        {
+            return;
+        }
+
+        _projectId = projectId;
         Changed?.Invoke(this, EventArgs.Empty);
     }
 }

@@ -75,10 +75,7 @@ public sealed partial class MainWindowViewModel
                 project?.Id,
                 project?.Name);
         }
-        catch (Exception exception) when (
-            exception is IOException
-                or UnauthorizedAccessException
-                or System.Text.Json.JsonException)
+        catch (Exception exception)
         {
             // O histórico não deve interromper a ação principal do usuário.
             TryWriteDiagnostic(

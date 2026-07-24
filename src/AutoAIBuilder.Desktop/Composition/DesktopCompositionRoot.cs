@@ -1,6 +1,8 @@
+using System.IO;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
+using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
 using AutoAIBuilder.Application.Projects;
@@ -23,15 +25,65 @@ public static class DesktopCompositionRoot
 
     public static IDiagnosticLogger DiagnosticLogger => DiagnosticLoggerFactory.Value;
 
+    public static SqliteDatabase InitializeDataStore()
+    {
+        ApplyPendingDataDirectoryChange();
+
+        var database = new SqliteDatabase(AppStoragePaths.DatabaseFile);
+        database.Initialize();
+
+        var migrationResult = LegacyJsonDataMigrator
+            .CreateDefault(database)
+            .Run();
+        WriteMigrationDiagnostics(migrationResult);
+        return database;
+    }
+
+    private static void ApplyPendingDataDirectoryChange()
+    {
+        var pendingDirectory =
+            StorageLocationConfiguration.GetPendingDataDirectory();
+        if (pendingDirectory is null)
+        {
+            return;
+        }
+
+        var currentDatabasePath = AppStoragePaths.DatabaseFile;
+        var pendingDatabasePath = Path.Combine(
+            pendingDirectory,
+            Path.GetFileName(currentDatabasePath));
+
+        if (File.Exists(currentDatabasePath))
+        {
+            var currentDatabase = new SqliteDatabase(currentDatabasePath);
+            currentDatabase.Initialize();
+            new SqliteDataMaintenanceService(
+                    currentDatabase,
+                    _ => { })
+                .CreateBackup(pendingDatabasePath);
+        }
+        else
+        {
+            new SqliteDatabase(pendingDatabasePath).Initialize();
+        }
+
+        StorageLocationConfiguration.ActivatePendingDataDirectory();
+    }
+
     public static MainWindowViewModel CreateMainWindowViewModel()
     {
-        var projectRepository = JsonProjectRepository.CreateDefault();
+        var database = InitializeDataStore();
+        var projectRepository = new SqliteProjectRepository(database);
         var workspaceService = new ProjectWorkspaceService(projectRepository);
         var settingsService = new ApplicationSettingsService(
-            JsonApplicationSettingsRepository.CreateDefault());
+            new SqliteApplicationSettingsRepository(database));
         var activityLogService = new ActivityLogService(
-            JsonActivityLogRepository.CreateDefault());
-        var diagnosticService = new EnvironmentDiagnosticService(DiagnosticLogger);
+            new SqliteActivityLogRepository(database));
+        var diagnosticService = new EnvironmentDiagnosticService(
+            DiagnosticLogger,
+            database);
+        IDataMaintenanceService dataMaintenanceService =
+            new SqliteDataMaintenanceService(database);
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -40,7 +92,8 @@ public static class DesktopCompositionRoot
             new ProjectValidationService(),
             new ProjectReportService(),
             activityLogService,
-            new ActiveProjectContext(),
+            new ActiveProjectContext(
+                new SqliteActiveProjectStateRepository(database)),
             DiagnosticLogger,
             diagnosticService,
             new NavigationService(),
@@ -48,6 +101,33 @@ public static class DesktopCompositionRoot
             new FilePickerService(),
             new ReportExportService(new SimplePdfReportRenderer()),
             new FileSystemLauncher(),
-            new DialogService());
+            new DialogService(),
+            dataMaintenanceService);
+    }
+
+    private static void WriteMigrationDiagnostics(
+        LegacyJsonMigrationResult result)
+    {
+        if (result.ImportedAnything)
+        {
+            DiagnosticLogger.Write(
+                DiagnosticLevel.Information,
+                "DataMigration",
+                "Dados JSON legados importados para o banco SQLite.",
+                properties: new Dictionary<string, string>
+                {
+                    ["projects"] = result.ImportedProjects.ToString(),
+                    ["settings"] = result.ImportedSettings.ToString(),
+                    ["activityEntries"] = result.ImportedActivityEntries.ToString()
+                });
+        }
+
+        foreach (var warning in result.Warnings)
+        {
+            DiagnosticLogger.Write(
+                DiagnosticLevel.Warning,
+                "DataMigration",
+                warning);
+        }
     }
 }

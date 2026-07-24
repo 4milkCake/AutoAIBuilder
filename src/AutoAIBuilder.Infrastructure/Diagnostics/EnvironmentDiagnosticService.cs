@@ -6,7 +6,8 @@ using AutoAIBuilder.Infrastructure.Persistence;
 namespace AutoAIBuilder.Infrastructure.Diagnostics;
 
 public sealed class EnvironmentDiagnosticService(
-    IDiagnosticLogger logger) : IDiagnosticService
+    IDiagnosticLogger logger,
+    SqliteDatabase database) : IDiagnosticService
 {
     public DiagnosticSnapshot Capture()
     {
@@ -29,10 +30,12 @@ public sealed class EnvironmentDiagnosticService(
                     : DiagnosticStatus.Warning,
                 $"Processo {RuntimeInformation.ProcessArchitecture}; SO {RuntimeInformation.OSArchitecture}."),
             CreatePathCheck("Dados locais", AppStoragePaths.DataDirectory),
+            CreateSqliteCheck(database),
+            CreatePathCheck("Backups de segurança", AppStoragePaths.BackupDirectory),
             CreatePathCheck("Log estruturado", logger.StoragePath),
-            CreateJsonFileCheck("Projetos", AppStoragePaths.ProjectsFile),
-            CreateJsonFileCheck("Configurações", AppStoragePaths.SettingsFile),
-            CreateJsonFileCheck("Histórico", AppStoragePaths.ActivityLogFile)
+            CreateLegacyJsonCheck("Projetos legados", AppStoragePaths.ProjectsFile),
+            CreateLegacyJsonCheck("Configurações legadas", AppStoragePaths.SettingsFile),
+            CreateLegacyJsonCheck("Histórico legado", AppStoragePaths.ActivityLogFile)
         };
 
         return new DiagnosticSnapshot(
@@ -57,7 +60,41 @@ public sealed class EnvironmentDiagnosticService(
                 : "A pasta será criada pelo aplicativo quando houver conteúdo para gravar.");
     }
 
-    private static DiagnosticCheck CreateJsonFileCheck(string name, string path)
+    private static DiagnosticCheck CreateSqliteCheck(SqliteDatabase database)
+    {
+        try
+        {
+            var result = database.QuickCheck();
+            var version = database.GetSchemaVersion();
+            var info = new FileInfo(database.DatabasePath);
+            var healthy = string.Equals(
+                result,
+                "ok",
+                StringComparison.OrdinalIgnoreCase);
+
+            return new DiagnosticCheck(
+                "Banco de dados SQLite",
+                database.DatabasePath,
+                healthy ? DiagnosticStatus.Healthy : DiagnosticStatus.Error,
+                healthy
+                    ? $"Esquema {version}; {info.Length:N0} bytes; integridade OK."
+                    : $"A verificação SQLite retornou: {result}.");
+        }
+        catch (Exception exception) when (
+            exception is IOException
+                or UnauthorizedAccessException
+                or InvalidDataException
+                or InvalidOperationException)
+        {
+            return new DiagnosticCheck(
+                "Banco de dados SQLite",
+                database.DatabasePath,
+                DiagnosticStatus.Error,
+                $"Não foi possível verificar o banco: {exception.Message}");
+        }
+    }
+
+    private static DiagnosticCheck CreateLegacyJsonCheck(string name, string path)
     {
         if (!File.Exists(path))
         {
@@ -65,7 +102,7 @@ public sealed class EnvironmentDiagnosticService(
                 name,
                 path,
                 DiagnosticStatus.Information,
-                "Arquivo ainda não criado ou não necessário.");
+                "Arquivo legado não encontrado; nenhuma migração pendente.");
         }
 
         try
@@ -75,8 +112,8 @@ public sealed class EnvironmentDiagnosticService(
             return new DiagnosticCheck(
                 name,
                 path,
-                DiagnosticStatus.Healthy,
-                $"{info.Length:N0} bytes; atualizado em {info.LastWriteTime:dd/MM/yyyy HH:mm:ss}.");
+                DiagnosticStatus.Information,
+                $"{info.Length:N0} bytes; preservado como fonte legada e não alterado.");
         }
         catch (JsonException exception)
         {

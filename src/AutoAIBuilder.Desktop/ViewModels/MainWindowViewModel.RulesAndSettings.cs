@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Settings;
@@ -135,7 +136,8 @@ public sealed partial class MainWindowViewModel
                 SelectedProject);
             StatusMessage = "Configurações locais salvas. Os novos padrões já estão ativos.";
         }
-        catch (ArgumentException exception)
+        catch (Exception exception) when (
+            exception is ArgumentException or InvalidDataException)
         {
             SetSettingsFormError(GetFriendlyMessage(exception));
         }

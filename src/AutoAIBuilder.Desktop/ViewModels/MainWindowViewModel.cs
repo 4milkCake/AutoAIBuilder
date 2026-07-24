@@ -8,6 +8,7 @@ using System.Windows.Input;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
+using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
 using AutoAIBuilder.Application.Projects;
@@ -38,6 +39,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IReportExportService _reportExportService;
     private readonly IFileSystemLauncher _fileSystemLauncher;
     private readonly IDialogService _dialogService;
+    private readonly IDataMaintenanceService _dataMaintenanceService;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -113,7 +115,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IFilePickerService filePicker,
         IReportExportService reportExportService,
         IFileSystemLauncher fileSystemLauncher,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IDataMaintenanceService dataMaintenanceService)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -130,6 +133,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _reportExportService = reportExportService;
         _fileSystemLauncher = fileSystemLauncher;
         _dialogService = dialogService;
+        _dataMaintenanceService = dataMaintenanceService;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -229,6 +233,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         ResetProjectRulesCommand = new RelayCommand(ResetProjectRules, () => SelectedProject is not null);
         SaveSettingsCommand = new RelayCommand(SaveSettings);
         ResetSettingsCommand = new RelayCommand(ResetSettings);
+        CreateDataBackupCommand = new RelayCommand(CreateDataBackup);
+        RestoreDataBackupCommand = new RelayCommand(RestoreDataBackup);
+        ChangeDataDirectoryCommand = new RelayCommand(ChangeDataDirectory);
         RunProjectValidationCommand = new RelayCommand(
             RunProjectValidation,
             () => SelectedProject is not null);
@@ -246,15 +253,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             () => _currentReport is not null);
         RefreshDiagnosticsCommand = new RelayCommand(RefreshDiagnostics);
 
-        var initialProject = _workspaceService.EnsureInitialProject();
-        RefreshProjects(initialProject.IsArchived ? null : initialProject.Id);
+        RefreshProjects(_activeProjectContext.ProjectId);
         TryRecordActivity(
             "Sistema",
             "Aplicativo iniciado",
             "AutoAIBuilder iniciado e dados locais carregados.",
             ActivityLevel.Information,
             SelectedProject);
-        StatusMessage = "Projeto ativo carregado. O painel apresenta dados locais reais.";
+        StatusMessage = SelectedProject is null
+            ? "Dados locais carregados. Crie um projeto para começar."
+            : "Projeto ativo restaurado. O painel apresenta dados locais reais.";
         TryWriteDiagnostic(
             DiagnosticLevel.Information,
             "Application",
@@ -314,6 +322,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ICommand ResetProjectRulesCommand { get; }
     public ICommand SaveSettingsCommand { get; }
     public ICommand ResetSettingsCommand { get; }
+    public ICommand CreateDataBackupCommand { get; }
+    public ICommand RestoreDataBackupCommand { get; }
+    public ICommand ChangeDataDirectoryCommand { get; }
     public ICommand RunProjectValidationCommand { get; }
     public ICommand GenerateProjectReportCommand { get; }
     public ICommand ExportProjectReportCommand { get; }

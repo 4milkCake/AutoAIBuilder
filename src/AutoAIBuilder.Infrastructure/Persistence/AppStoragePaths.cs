@@ -7,15 +7,24 @@ public static class AppStoragePaths
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AutoAIBuilder");
 
-    public static string DataDirectory => Path.Combine(RootDirectory, "Data");
+    public static string DefaultDataDirectory => Path.Combine(RootDirectory, "Data");
+
+    public static string DataDirectory => StorageLocationConfiguration.ResolveDataDirectory();
 
     public static string LogDirectory => Path.Combine(RootDirectory, "Logs");
 
-    public static string ProjectsFile => Path.Combine(DataDirectory, "projects.json");
+    public static string BackupDirectory => Path.Combine(DataDirectory, "Backups");
 
-    public static string SettingsFile => Path.Combine(DataDirectory, "settings.json");
+    public static string DatabaseFile => Path.Combine(DataDirectory, "autoaibuilder.db");
 
-    public static string ActivityLogFile => Path.Combine(DataDirectory, "activity-log.json");
+    public static string StorageLocationFile =>
+        Path.Combine(RootDirectory, "storage-location.json");
+
+    public static string ProjectsFile => Path.Combine(DefaultDataDirectory, "projects.json");
+
+    public static string SettingsFile => Path.Combine(DefaultDataDirectory, "settings.json");
+
+    public static string ActivityLogFile => Path.Combine(DefaultDataDirectory, "activity-log.json");
 
     public static string DiagnosticLogFile => Path.Combine(LogDirectory, "diagnostics.jsonl");
 }

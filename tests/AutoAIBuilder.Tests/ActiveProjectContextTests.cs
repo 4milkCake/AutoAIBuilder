@@ -30,4 +30,33 @@ public sealed class ActiveProjectContextTests
 
         Assert.IsNull(context.ProjectId);
     }
+
+    [TestMethod]
+    public void PersistentContext_LoadsSavesAndReloadsActiveProject()
+    {
+        var firstProjectId = Guid.NewGuid();
+        var secondProjectId = Guid.NewGuid();
+        var repository = new InMemoryActiveProjectStateRepository(firstProjectId);
+        var context = new ActiveProjectContext(repository);
+
+        Assert.AreEqual(firstProjectId, context.ProjectId);
+
+        context.Select(secondProjectId);
+        Assert.AreEqual(secondProjectId, repository.ProjectId);
+
+        repository.Save(firstProjectId);
+        context.Reload();
+
+        Assert.AreEqual(firstProjectId, context.ProjectId);
+    }
+
+    private sealed class InMemoryActiveProjectStateRepository(Guid? projectId)
+        : IActiveProjectStateRepository
+    {
+        public Guid? ProjectId { get; private set; } = projectId;
+
+        public Guid? Load() => ProjectId;
+
+        public void Save(Guid? projectId) => ProjectId = projectId;
+    }
 }

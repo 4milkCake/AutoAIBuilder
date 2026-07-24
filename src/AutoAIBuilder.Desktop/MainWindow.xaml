@@ -1,0 +1,1975 @@
+<Window x:Class="AutoAIBuilder.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:AutoAIBuilder.Desktop.Views"
+        mc:Ignorable="d"
+        Title="AutoIA Builder"
+        Width="1500"
+        Height="900"
+        MinWidth="1080"
+        MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        KeyboardNavigation.TabNavigation="Cycle">
+    <Window.Resources>
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style x:Key="NavItemStyle" TargetType="Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Margin" Value="8,2" />
+            <Setter Property="Padding" Value="11,9" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryDarkBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                    <Setter Property="Opacity" Value="0.55" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="Background" Value="#26364B" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style x:Key="FieldStyle" TargetType="TextBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Background" Value="#091523" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisualStyle}" />
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#8DD0FF" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="NavigationButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ProjectSelectorStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="#07111E" />
+            <Setter Property="Background" Value="#E7EEF8" />
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisualStyle}" />
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="#07111E" />
+                        <Setter Property="Background" Value="#E7EEF8" />
+                        <Setter Property="Padding" Value="10,7" />
+                        <Style.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#B9DEFF" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ProjectActionButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="FontSize" Value="9" />
+            <Setter Property="Background" Value="#17304A" />
+            <Setter Property="BorderBrush" Value="#31577B" />
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#17304A" />
+            <Setter Property="BorderBrush" Value="#31577B" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
+        <Style x:Key="ArchiveButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource ProjectActionButtonStyle}">
+            <Setter Property="Background" Value="#3B2C18" />
+            <Setter Property="BorderBrush" Value="#7A5927" />
+            <Setter Property="Foreground" Value="#F8C86A" />
+        </Style>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding OpenDashboardCommand}" />
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding OpenProjectsCommand}" />
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding OpenFilesCommand}" />
+        <KeyBinding Gesture="Ctrl+4" Command="{Binding OpenProjectRulesCommand}" />
+        <KeyBinding Gesture="Ctrl+5" Command="{Binding OpenValidatorsCommand}" />
+        <KeyBinding Gesture="Ctrl+6" Command="{Binding OpenReportsCommand}" />
+        <KeyBinding Gesture="Ctrl+7" Command="{Binding OpenHistoryCommand}" />
+        <KeyBinding Gesture="Ctrl+8" Command="{Binding OpenDiagnosticsCommand}" />
+        <KeyBinding Modifiers="Control" Key="OemComma" Command="{Binding OpenSettingsCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCurrentSectionCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding DismissNotificationCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="62" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="218" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="276" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Top bar -->
+        <Border Grid.Row="0"
+                Grid.ColumnSpan="3"
+                Background="#091421"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="198" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="1" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Border Width="30"
+                            Height="30"
+                            CornerRadius="10"
+                            BorderBrush="{StaticResource PrimaryBrush}"
+                            BorderThickness="2">
+                        <TextBlock Text="AI"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontWeight="Bold"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Margin="10,0,0,0"
+                               Text="AutoIA Builder"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1"
+                           Margin="16,0"
+                           Text="{Binding ProjectName}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Border Grid.Column="2"
+                        Width="1"
+                        Height="26"
+                        Background="{StaticResource BorderBrush}"
+                        VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3"
+                           Margin="16,0"
+                           Text="{Binding ProjectType}"
+                           Foreground="{StaticResource MutedTextBrush}"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="5"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Border Padding="12,7"
+                            Margin="0,0,8,0"
+                            Background="{StaticResource PanelBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="5">
+                        <TextBlock Text="●  Local"
+                                   Foreground="{StaticResource SuccessBrush}"
+                                   FontSize="12"
+                                   ToolTip="O AutoAIBuilder está operando com dados locais. Nenhuma conexão de IA está ativa." />
+                    </Border>
+                    <Button Command="{Binding OpenSettingsCommand}"
+                            Style="{StaticResource NavigationButtonStyle}"
+                            ToolTip="Abrir configurações">
+                        <Border Padding="12,7"
+                                Background="{StaticResource PanelBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="5">
+                            <TextBlock Text="⚙  Configurações"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="12" />
+                        </Border>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Left navigation -->
+        <Border Grid.Row="1"
+                Grid.RowSpan="2"
+                Grid.Column="0"
+                Background="#081321"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl Margin="0,12,0,0"
+                                  ItemsSource="{Binding Navigation}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding Section}"
+                                        Style="{StaticResource NavigationButtonStyle}"
+                                        ToolTip="{Binding ToolTip}"
+                                        AutomationProperties.Name="{Binding Label}"
+                                        AutomationProperties.HelpText="{Binding ToolTip}">
+                                    <Border Style="{StaticResource NavItemStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Icon}"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontSize="15"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Label}"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center" />
+                                            <Border Grid.Column="2"
+                                                    Padding="7,2"
+                                                    Background="#17472D"
+                                                    CornerRadius="8">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DisplayHint}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding DisplayHint}"
+                                                           Foreground="{StaticResource SuccessBrush}"
+                                                           FontSize="10" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <Border Grid.Row="1"
+                        Margin="12"
+                        Padding="12"
+                        Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Projeto atual"
+                                   FontWeight="SemiBold"
+                                   FontSize="12" />
+                        <TextBlock Margin="0,10,0,2"
+                                   Text="{Binding ProjectName}"
+                                   FontSize="12" />
+                        <TextBlock Text="{Binding ProjectType}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding ProjectDetails}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,2,0,0"
+                                   Text="{Binding Disciplines}"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding UpdatedAt}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Main dashboard -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Margin="12"
+              Visibility="{Binding DashboardVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Padding="12"
+                    Style="{StaticResource CardStyle}">
+                <ItemsControl ItemsSource="{Binding Workflow}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="5,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <Border Width="34"
+                                            Height="34"
+                                            HorizontalAlignment="Center"
+                                            Background="#0B1726"
+                                            BorderBrush="{Binding Accent}"
+                                            BorderThickness="1.5"
+                                            CornerRadius="17">
+                                        <TextBlock Text="{Binding Number}"
+                                                   Foreground="{Binding Accent}"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Height="1"
+                                            Margin="50,0,-50,0"
+                                            Background="{StaticResource BorderBrush}"
+                                            VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock Grid.Row="1"
+                                           Margin="0,7,0,2"
+                                           Text="{Binding Name}"
+                                           FontSize="10"
+                                           TextAlignment="Center" />
+                                <TextBlock Grid.Row="2"
+                                           Text="{Binding Status}"
+                                           Foreground="{Binding Accent}"
+                                           FontSize="9"
+                                           TextAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Margin="0,12"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="44" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid Margin="14,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Planta — pavimento tipo"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="18,0,0,0"
+                                           Text="Visualização demonstrativa • ferramentas CAD ainda indisponíveis"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="10"
+                                           ToolTip="Os controles de edição serão habilitados somente na fase de integração CAD." />
+                            </StackPanel>
+                            <Border Grid.Column="1"
+                                    Padding="10,5"
+                                    Background="{StaticResource PanelSecondaryBrush}"
+                                    CornerRadius="4">
+                                <TextBlock Text="Vista 2D"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="10" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="170" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Margin="10"
+                                Padding="10"
+                                Background="#0A1624"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <StackPanel>
+                                <TextBlock Text="Camadas"
+                                           Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Text="▣  ARQ-PAREDES" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="▣  ARQ-PORTAS" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="▣  ARQ-JANELAS" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="■  ELE-PONTOS" Foreground="#F8C33A" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="■  ELE-CONDUTOS" Foreground="#FF635C" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="■  ELE-CIRCUITOS" Foreground="#4F8CFF" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="■  HID-ÁGUA" Foreground="#28AFFF" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="■  HID-ESGOTO" Foreground="#28C8D8" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="□  TEXTOS" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,5" />
+                                <TextBlock Text="□  COTAS" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,5" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Margin="0,10"
+                                Background="#08121F"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                ClipToBounds="True">
+                            <Grid>
+                                <Grid.Background>
+                                    <DrawingBrush TileMode="Tile"
+                                                  Viewport="0,0,24,24"
+                                                  ViewportUnits="Absolute"
+                                                  Viewbox="0,0,24,24"
+                                                  ViewboxUnits="Absolute">
+                                        <DrawingBrush.Drawing>
+                                            <GeometryDrawing Brush="Transparent"
+                                                             Geometry="M 0,0 L 24,0 24,24">
+                                                <GeometryDrawing.Pen>
+                                                    <Pen Brush="#15243A"
+                                                         Thickness="0.35" />
+                                                </GeometryDrawing.Pen>
+                                            </GeometryDrawing>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </Grid.Background>
+
+                                <Canvas Width="620"
+                                        Height="390"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Rectangle Canvas.Left="35" Canvas.Top="30"
+                                               Width="550" Height="320"
+                                               Stroke="#6F8199" StrokeThickness="2" />
+                                    <Line X1="220" Y1="30" X2="220" Y2="350"
+                                          Stroke="#6F8199" StrokeThickness="1.5" />
+                                    <Line X1="390" Y1="30" X2="390" Y2="350"
+                                          Stroke="#6F8199" StrokeThickness="1.5" />
+                                    <Line X1="35" Y1="155" X2="585" Y2="155"
+                                          Stroke="#6F8199" StrokeThickness="1.5" />
+                                    <Line X1="35" Y1="265" X2="220" Y2="265"
+                                          Stroke="#6F8199" StrokeThickness="1.5" />
+                                    <Line X1="390" Y1="245" X2="585" Y2="245"
+                                          Stroke="#6F8199" StrokeThickness="1.5" />
+
+                                    <Polyline Points="70,115 150,115 150,205 270,205 270,105 445,105 445,190 535,190"
+                                              Stroke="#36D17C"
+                                              StrokeThickness="2"
+                                              StrokeDashArray="4,3" />
+                                    <Polyline Points="80,300 180,300 180,235 320,235 320,80 500,80 500,285"
+                                              Stroke="#2C9BFF"
+                                              StrokeThickness="2"
+                                              StrokeDashArray="5,3" />
+                                    <Polyline Points="105,90 105,225 330,225 330,310 520,310"
+                                              Stroke="#F8C33A"
+                                              StrokeThickness="2"
+                                              StrokeDashArray="3,3" />
+
+                                    <Ellipse Canvas.Left="143" Canvas.Top="108" Width="14" Height="14"
+                                             Fill="#08121F" Stroke="#36D17C" StrokeThickness="2" />
+                                    <Ellipse Canvas.Left="263" Canvas.Top="198" Width="14" Height="14"
+                                             Fill="#08121F" Stroke="#36D17C" StrokeThickness="2" />
+                                    <Ellipse Canvas.Left="438" Canvas.Top="98" Width="14" Height="14"
+                                             Fill="#08121F" Stroke="#36D17C" StrokeThickness="2" />
+                                    <Ellipse Canvas.Left="493" Canvas.Top="278" Width="14" Height="14"
+                                             Fill="#08121F" Stroke="#2C9BFF" StrokeThickness="2" />
+                                    <Rectangle Canvas.Left="174" Canvas.Top="229" Width="12" Height="12"
+                                               Fill="#F8C33A" />
+                                    <Rectangle Canvas.Left="324" Canvas.Top="304" Width="12" Height="12"
+                                               Fill="#F8C33A" />
+
+                                    <TextBlock Canvas.Left="78" Canvas.Top="78"
+                                               Text="DORMITÓRIO"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10" />
+                                    <TextBlock Canvas.Left="265" Canvas.Top="175"
+                                               Text="SALA / JANTAR"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10" />
+                                    <TextBlock Canvas.Left="450" Canvas.Top="120"
+                                               Text="COZINHA"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10" />
+                                    <TextBlock Canvas.Left="86" Canvas.Top="292"
+                                               Text="SUÍTE"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10" />
+                                    <TextBlock Canvas.Left="440" Canvas.Top="272"
+                                               Text="SERVIÇO"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10" />
+                                </Canvas>
+
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Bottom"
+                                            Margin="0,0,0,12">
+                                    <TextBlock Text="Canvas técnico demonstrativo"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="10"
+                                               TextAlignment="Center" />
+                                    <TextBlock Text="Importação CAD e edição serão conectadas em uma próxima fase"
+                                               Foreground="#627087"
+                                               FontSize="9"
+                                               TextAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Margin="10"
+                                Padding="10"
+                                Background="#0A1624"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <StackPanel>
+                                <TextBlock Text="Legenda"
+                                           Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Text="◉  Tomada elétrica" Foreground="#F8C33A" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="✕  Ponto de luz" Foreground="#F8C33A" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="—  Eletroduto" Foreground="#FF635C" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="--  Circuito" Foreground="#36D17C" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="—  Água fria" Foreground="#2C9BFF" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="—  Água quente" Foreground="#FF635C" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="—  Esgoto" Foreground="#28C8D8" FontSize="10" Margin="0,6" />
+                                <TextBlock Text="⊗  Ventilação" Foreground="#28C8D8" FontSize="10" Margin="0,6" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <ItemsControl Grid.Row="2"
+                          ItemsSource="{Binding Metrics}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,8,0"
+                                Padding="13"
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="10" />
+                                <TextBlock Margin="0,8,0,8"
+                                           Text="{Binding Value}"
+                                           FontSize="22"
+                                           FontWeight="Light" />
+                                <ProgressBar Maximum="100"
+                                             Value="{Binding Progress}"
+                                             Foreground="{Binding Accent}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <!-- Projects workspace -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              Margin="12"
+              Visibility="{Binding ProjectsVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="310" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.ColumnSpan="3">
+                <TextBlock Text="Projetos"
+                           FontSize="22"
+                           FontWeight="SemiBold" />
+                <TextBlock Margin="0,4,0,0"
+                           Text="Crie e organize os espaços de trabalho locais do AutoAIBuilder."
+                           Foreground="{StaticResource MutedTextBrush}"
+                           FontSize="11" />
+            </StackPanel>
+
+            <Border Grid.Row="2"
+                    Grid.Column="0"
+                    Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="{Binding ProjectFormTitle}"
+                               Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Text="Nome"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10" />
+                    <TextBox Margin="0,5,0,12"
+                             Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FieldStyle}" />
+                    <TextBlock Text="Tipo"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10" />
+                    <TextBox Margin="0,5,0,12"
+                             Text="{Binding NewProjectType, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FieldStyle}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Pavimentos"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="10" />
+                            <TextBox Margin="0,5,0,0"
+                                     Text="{Binding NewProjectFloorsText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FieldStyle}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Unidades"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="10" />
+                            <TextBox Margin="0,5,0,0"
+                                     Text="{Binding NewProjectUnitsText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FieldStyle}" />
+                        </StackPanel>
+                    </Grid>
+                    <Button Margin="0,18,0,0"
+                            Content="{Binding ProjectSubmitText}"
+                            Command="{Binding CreateProjectCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" />
+                    <Button Margin="0,8,0,0"
+                            Content="Cancelar edição"
+                            Command="{Binding CancelProjectEditCommand}"
+                            Style="{StaticResource ProjectActionButtonStyle}"
+                            Visibility="{Binding CancelProjectEditVisibility}" />
+                    <Border Margin="0,10,0,0"
+                            Padding="10"
+                            Background="#3A1922"
+                            BorderBrush="#8A3448"
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Visibility="{Binding ProjectFormErrorVisibility}">
+                        <TextBlock Text="{Binding ProjectFormError}"
+                                   Foreground="#FF9DAC"
+                                   FontSize="10" />
+                    </Border>
+                    <Border Margin="0,18,0,0"
+                            Padding="11"
+                            Background="{StaticResource PanelSecondaryBrush}"
+                            CornerRadius="5">
+                        <TextBlock Text="Cada novo projeto recebe automaticamente as camadas iniciais de arquitetura, elétrica, hidráulica e documentação."
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2"
+                    Grid.Column="2"
+                    Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="240" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,5"
+                                       Text="Pesquisar"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <TextBox Text="{Binding ProjectSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Pesquisar por nome, tipo ou disciplina"
+                                     Style="{StaticResource FieldStyle}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Margin="0,0,0,5"
+                                       Text="Ordenar por"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <ComboBox ItemsSource="{Binding ProjectSortOptions}"
+                                      SelectedItem="{Binding SelectedProjectSort}"
+                                      Style="{StaticResource ProjectSelectorStyle}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                   Foreground="#07111E" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Projetos ativos"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Projects.Count, StringFormat={}{0} resultado(s)}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10"
+                                   VerticalAlignment="Top" />
+                    </Grid>
+
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding Projects}"
+                             SelectedItem="{Binding SelectedManagedProject}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,8" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14"
+                                        Background="#0A1624"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                     <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="*" />
+                                             <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Text="{Binding Type}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="10" />
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Text="{Binding Scale}"
+                                                       FontSize="10" />
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Text="{Binding Disciplines}"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontSize="9" />
+                                        </StackPanel>
+                                         <StackPanel Grid.Column="1"
+                                                     Margin="18,0,0,0"
+                                                     HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding FileCount, StringFormat={}{0} arquivo(s)}"
+                                                       FontSize="10"
+                                                       TextAlignment="Right" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding LayerCount, StringFormat={}{0} camadas}"
+                                                       Foreground="{StaticResource SuccessBrush}"
+                                                       FontSize="10"
+                                                       TextAlignment="Right" />
+                                            <TextBlock Margin="0,12,0,0"
+                                                       Text="{Binding UpdatedAt}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="9"
+                                                        TextAlignment="Right" />
+                                         </StackPanel>
+                                         <StackPanel Grid.Row="1"
+                                                     Grid.ColumnSpan="2"
+                                                     Margin="0,12,0,0"
+                                                     Orientation="Horizontal"
+                                                     HorizontalAlignment="Right">
+                                             <Button Margin="0,0,7,0"
+                                                     Content="Editar"
+                                                     Command="{Binding DataContext.BeginEditProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ProjectActionButtonStyle}" />
+                                             <Button Margin="0,0,7,0"
+                                                     Content="Duplicar"
+                                                     Command="{Binding DataContext.DuplicateProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ProjectActionButtonStyle}" />
+                                             <Button Content="Arquivar"
+                                                     Command="{Binding DataContext.ArchiveProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ArchiveButtonStyle}" />
+                                         </StackPanel>
+                                     </Grid>
+                                 </Border>
+                             </DataTemplate>
+                         </ListBox.ItemTemplate>
+                     </ListBox>
+
+                    <Grid Grid.Row="3"
+                          Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Arquivados"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ArchivedProjectCount, StringFormat={}{0} arquivado(s)}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10"
+                                   VerticalAlignment="Top" />
+                    </Grid>
+
+                    <ListBox Grid.Row="4"
+                             ItemsSource="{Binding ArchivedProjects}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,8" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="IsTabStop" Value="False" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12"
+                                        Background="#111722"
+                                        BorderBrush="#4A3C2A"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding ArchivedAt, StringFormat=Arquivado em {0}}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="9" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Margin="12,0,0,0"
+                                                Content="Restaurar"
+                                                Command="{Binding DataContext.RestoreProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource ProjectActionButtonStyle}"
+                                                VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Files workspace -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              Margin="12"
+              Visibility="{Binding FilesVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Arquivos do projeto"
+                               FontSize="22"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="{Binding FileSummary}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="11" />
+                </StackPanel>
+                <ComboBox Grid.Column="1"
+                           Height="36"
+                           ItemsSource="{Binding AvailableProjects}"
+                           SelectedItem="{Binding SelectedProject}"
+                           Style="{StaticResource ProjectSelectorStyle}"
+                           VerticalAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"
+                                       Foreground="#07111E"
+                                       FontWeight="SemiBold" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Grid.Column="3"
+                        Content="Selecionar e catalogar arquivos"
+                        Command="{Binding ImportFileCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        VerticalAlignment="Center" />
+            </Grid>
+
+            <Border Grid.Row="2"
+                    Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedProjectTitle}"
+                                       Style="{StaticResource SectionTitleStyle}" />
+                            <TextBlock Text="O catálogo armazena caminho, tipo, tamanho e data. Nenhum arquivo original é movido ou copiado."
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="9" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ProjectFiles.Count, StringFormat={}{0} resultado(s)}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10" />
+                    </Grid>
+
+                    <Grid Grid.Row="1"
+                          Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="230" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,5"
+                                       Text="Pesquisar no catálogo"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <TextBox Text="{Binding FileSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Pesquisar por nome, caminho, extensão ou tipo"
+                                     Style="{StaticResource FieldStyle}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Margin="0,0,0,5"
+                                       Text="Filtrar"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <ComboBox ItemsSource="{Binding FileFilterOptions}"
+                                      SelectedItem="{Binding SelectedFileFilter}"
+                                      Style="{StaticResource ProjectSelectorStyle}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                   Foreground="#07111E" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <ListBox Grid.Row="2"
+                             Margin="0,14,0,0"
+                             ItemsSource="{Binding ProjectFiles}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,7" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="13"
+                                        Background="#0A1624"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="42" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="100" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="32"
+                                                Height="32"
+                                                Background="{StaticResource PrimaryDarkBrush}"
+                                                CornerRadius="5">
+                                            <TextBlock Text="{Binding Extension}"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontSize="8"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding SourcePath}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="9"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding SourcePath}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Kind}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="9"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding Size}"
+                                                   FontSize="9"
+                                                   VerticalAlignment="Center" />
+                                         <TextBlock Grid.Column="4"
+                                                    Text="{Binding Status}"
+                                                    Foreground="{Binding StatusAccent}"
+                                                    FontSize="9"
+                                                    VerticalAlignment="Center"
+                                                    TextAlignment="Right" />
+                                         <TextBlock Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    Margin="0,12,0,0"
+                                                    Text="{Binding ImportedAt, StringFormat=Catalogado em {0}}"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    FontSize="9"
+                                                    VerticalAlignment="Center" />
+                                         <StackPanel Grid.Row="1"
+                                                     Grid.Column="2"
+                                                     Grid.ColumnSpan="3"
+                                                     Margin="0,10,0,0"
+                                                     Orientation="Horizontal"
+                                                     HorizontalAlignment="Right">
+                                             <Button Margin="0,0,6,0"
+                                                     Content="Abrir"
+                                                     Command="{Binding DataContext.OpenProjectFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ProjectActionButtonStyle}" />
+                                             <Button Margin="0,0,6,0"
+                                                     Content="Mostrar"
+                                                     Command="{Binding DataContext.RevealProjectFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ProjectActionButtonStyle}" />
+                                             <Button Margin="0,0,6,0"
+                                                     Content="Atualizar"
+                                                     Command="{Binding DataContext.RefreshProjectFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ProjectActionButtonStyle}" />
+                                             <Button Content="Remover referência"
+                                                     Command="{Binding DataContext.RemoveProjectFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Style="{StaticResource ArchiveButtonStyle}" />
+                                         </StackPanel>
+                                     </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Project rules workspace -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              Margin="12"
+              Visibility="{Binding ProjectRulesVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="340" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Regras de projeto"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,5,0,0"
+                                   Text="Defina critérios técnicos antes de conectar máscaras, validadores e automações."
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Projeto ativo"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,5,0,0"
+                                   Text="{Binding SelectedProjectTitle}"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto">
+                <Border Padding="20"
+                        Style="{StaticResource CardStyle}"
+                        IsEnabled="{Binding HasSelectedProject}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Unidade de medida"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           Margin="0,0,0,5" />
+                                <ComboBox ItemsSource="{Binding MeasurementUnitOptions}"
+                                          SelectedItem="{Binding RuleMeasurementUnit}"
+                                          Style="{StaticResource ProjectSelectorStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Escala padrão"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           Margin="0,0,0,5" />
+                                <TextBox Text="{Binding RuleDrawingScale, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Exemplo: 1:50"
+                                         Style="{StaticResource FieldStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="1"
+                              Margin="0,18,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Altura padrão do pavimento (m)"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           Margin="0,0,0,5" />
+                                <TextBox Text="{Binding RuleFloorHeightText, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Exemplo: 2,80"
+                                         Style="{StaticResource FieldStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Padrão de nomenclatura"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           Margin="0,0,0,5" />
+                                <TextBox Text="{Binding RuleNamingStandard, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Exemplo: DISCIPLINA-TIPO-NÍVEL"
+                                         Style="{StaticResource FieldStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="2"
+                                Margin="0,20,0,0"
+                                Padding="16"
+                                Background="#0A1624"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <StackPanel>
+                                <TextBlock Text="Critérios de segurança e qualidade"
+                                           FontSize="12"
+                                           FontWeight="SemiBold" />
+                                <CheckBox Margin="0,14,0,0"
+                                          Content="Exigir conformidade com o catálogo de camadas"
+                                          IsChecked="{Binding RuleRequireLayerStandard}"
+                                          Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Margin="24,3,0,0"
+                                           Text="Preparará os validadores para conferir nomes e propriedades das camadas."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9" />
+                                <CheckBox Margin="0,14,0,0"
+                                          Content="Exigir integridade dos arquivos catalogados"
+                                          IsChecked="{Binding RuleRequireFileIntegrity}"
+                                          Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Margin="24,3,0,0"
+                                           Text="Arquivos ausentes ou alterados serão tratados como pendências."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9" />
+                                <CheckBox Margin="0,14,0,0"
+                                          Content="Bloquear futuras automações quando houver erros de validação"
+                                          IsChecked="{Binding RuleBlockAutomationOnErrors}"
+                                          Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Margin="24,3,0,0"
+                                           Text="A regra já fica persistida; sua execução será conectada na fase de automações."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9" />
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Grid.Row="3"
+                              Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Padding="12,8"
+                                    Background="#3B1F27"
+                                    BorderBrush="#7B3446"
+                                    BorderThickness="1"
+                                    CornerRadius="5"
+                                    Visibility="{Binding RuleFormErrorVisibility}">
+                                <TextBlock Text="{Binding RuleFormError}"
+                                           Foreground="#FF9AAA"
+                                           FontSize="9" />
+                            </Border>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal">
+                                <Button Margin="0,0,8,0"
+                                        Content="Carregar padrões"
+                                        Command="{Binding ResetProjectRulesCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}" />
+                                <Button Content="Salvar regras"
+                                        Command="{Binding SaveProjectRulesCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Validators workspace -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              Margin="12"
+              Visibility="{Binding ValidatorsVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Validadores"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,5,0,0"
+                                   Text="{Binding ValidationSummary}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding ValidationEvaluatedAt}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="Executar verificação"
+                            Command="{Binding RunProjectValidationCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="1.5*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Padding="15"
+                        Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="APROVADOS"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding ValidationPassedCount}"
+                                   Foreground="#36D17C"
+                                   FontSize="24"
+                                   FontWeight="Light" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Padding="15"
+                        Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="ALERTAS"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding ValidationWarningCount}"
+                                   Foreground="#F8C33A"
+                                   FontSize="24"
+                                   FontWeight="Light" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4"
+                        Padding="15"
+                        Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="ERROS"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding ValidationErrorCount}"
+                                   Foreground="#FF5D68"
+                                   FontSize="24"
+                                   FontWeight="Light" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="6"
+                        Padding="15"
+                        Background="#0A1624"
+                        BorderBrush="{Binding ValidationGateAccent}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="PRONTIDÃO"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,9,0,0"
+                                   Text="{Binding ValidationGateStatus}"
+                                   Foreground="{Binding ValidationGateAccent}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="4"
+                    Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <ListBox ItemsSource="{Binding ValidationResults}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,9" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14"
+                                        Background="#0A1624"
+                                        BorderBrush="{Binding Accent}"
+                                        BorderThickness="1,0,0,0"
+                                        CornerRadius="5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="92" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="260" />
+                                            <ColumnDefinition Width="100" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Area}"
+                                                       Foreground="{Binding Accent}"
+                                                       FontSize="10"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding Code}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,5,16,0"
+                                                       Text="{Binding Detail}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="9"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Ação recomendada"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                            <TextBlock Margin="0,5,16,0"
+                                                       Text="{Binding Recommendation}"
+                                                       FontSize="9"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <Border Grid.Column="3"
+                                                Padding="8,5"
+                                                BorderBrush="{Binding Accent}"
+                                                BorderThickness="1"
+                                                CornerRadius="9"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Status}"
+                                                       Foreground="{Binding Accent}"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding EmptyValidationVisibility}">
+                        <TextBlock Text="✓"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontSize="28"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Margin="0,10,0,0"
+                                   Text="Nenhuma verificação executada"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Margin="0,5,0,0"
+                                   Text="Selecione um projeto e execute a verificação preventiva."
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Settings workspace -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              Margin="12"
+              Visibility="{Binding SettingsVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Padding="16"
+                    Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Configurações"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="Preferências locais usadas pelo AutoAIBuilder. Nenhuma configuração altera os arquivos originais do projeto."
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10" />
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="360" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Padding="20"
+                            Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Padrões para novos projetos"
+                                           FontSize="13"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Text="Esses valores preenchem automaticamente o formulário de criação."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1"
+                                        Margin="0,18,0,0">
+                                <TextBlock Text="Tipo padrão"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           Margin="0,0,0,5" />
+                                <TextBox Text="{Binding SettingsDefaultProjectType, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource FieldStyle}" />
+                            </StackPanel>
+
+                            <Grid Grid.Row="2"
+                                  Margin="0,18,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Pavimentos"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="9"
+                                               Margin="0,0,0,5" />
+                                    <TextBox Text="{Binding SettingsDefaultFloorsText, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource FieldStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Unidades"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="9"
+                                               Margin="0,0,0,5" />
+                                    <TextBox Text="{Binding SettingsDefaultUnitsText, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource FieldStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Grid.Row="3"
+                                    Margin="0,20,0,0"
+                                    Padding="16"
+                                    Background="#0A1624"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <StackPanel>
+                                    <TextBlock Text="Confirmações de segurança"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                    <CheckBox Margin="0,14,0,0"
+                                              Content="Confirmar antes de remover uma referência do catálogo"
+                                              IsChecked="{Binding SettingsConfirmFileReferenceRemoval}"
+                                              Foreground="{StaticResource TextBrush}" />
+                                    <TextBlock Margin="24,3,0,0"
+                                               Text="A remoção nunca apaga o arquivo original, mesmo quando a confirmação estiver desativada."
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="9"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="4"
+                                    Margin="0,16,0,0"
+                                    Padding="12,8"
+                                    Background="#3B1F27"
+                                    BorderBrush="#7B3446"
+                                    BorderThickness="1"
+                                    CornerRadius="5"
+                                    Visibility="{Binding SettingsFormErrorVisibility}">
+                                <TextBlock Text="{Binding SettingsFormError}"
+                                           Foreground="#FF9AAA"
+                                           FontSize="9" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Column="2">
+                        <Border Padding="18"
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Armazenamento local"
+                                           FontSize="13"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="%LOCALAPPDATA%\AutoAIBuilder\Data"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontSize="10"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="Somente metadados de projetos e preferências são persistidos. Arquivos catalogados permanecem em seus caminhos originais."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,12,0,0"
+                                Padding="18"
+                                Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Aplicar alterações"
+                                           FontSize="13"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,8,0,16"
+                                           Text="As preferências são salvas imediatamente neste computador."
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                                <Button Content="Salvar configurações"
+                                        Command="{Binding SaveSettingsCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}" />
+                                <Button Margin="0,8,0,0"
+                                        Content="Restaurar padrões"
+                                        Command="{Binding ResetSettingsCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <views:ReportsView Grid.Row="1"
+                           Grid.Column="1"
+                           Grid.ColumnSpan="2"
+                           Margin="12"
+                           Visibility="{Binding ReportsVisibility}" />
+
+        <views:HistoryView Grid.Row="1"
+                           Grid.Column="1"
+                           Grid.ColumnSpan="2"
+                           Margin="12"
+                           Visibility="{Binding HistoryVisibility}" />
+
+        <views:DiagnosticsView Grid.Row="1"
+                               Grid.Column="1"
+                               Grid.ColumnSpan="2"
+                               Margin="12"
+                               Visibility="{Binding DiagnosticsVisibility}" />
+
+        <!-- Right status rail -->
+        <Grid Grid.Row="1"
+              Grid.Column="2"
+              Margin="0,12,12,12"
+              Visibility="{Binding DashboardVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Padding="12"
+                    Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Agentes IA"
+                               Style="{StaticResource SectionTitleStyle}" />
+                    <ItemsControl ItemsSource="{Binding Agents}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="0,8"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="26"
+                                                Height="26"
+                                                Background="#102641"
+                                                BorderBrush="{Binding Accent}"
+                                                BorderThickness="1"
+                                                CornerRadius="13">
+                                            <TextBlock Text="✦"
+                                                       Foreground="{Binding Accent}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="10"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Role}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       FontSize="9" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Status}"
+                                                   Foreground="{Binding Accent}"
+                                                   FontSize="9"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2"
+                    Padding="12"
+                    Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Log de atividades"
+                               Style="{StaticResource SectionTitleStyle}" />
+                    <ItemsControl Grid.Row="1"
+                                  ItemsSource="{Binding Activities}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="36" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="6"
+                                             Height="6"
+                                             Fill="{Binding Accent}"
+                                             VerticalAlignment="Top"
+                                             Margin="0,4,0,0" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Time}"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="9" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Description}"
+                                               FontSize="9" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Grid.Row="2"
+                            Margin="0,12,0,0"
+                            Padding="10"
+                            Background="{StaticResource PanelSecondaryBrush}"
+                            CornerRadius="5">
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="9"
+                                   TextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Bottom action bar -->
+        <Border Grid.Row="2"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Margin="12,0,12,12"
+                Padding="14,0"
+                Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid Visibility="{Binding DashboardVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Próxima ação recomendada:"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Margin="14,0"
+                               Text="{Binding RecommendedAction}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="2"
+                            Content="Continuar  ▶"
+                            Command="{Binding ExecuteNextStepCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            VerticalAlignment="Center" />
+                </Grid>
+                <Grid Visibility="{Binding WorkspaceStatusVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="●"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontSize="10"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Margin="10,0,0,0"
+                               Text="{Binding StatusMessage}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Global accessible notification -->
+        <Border Grid.Row="1"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Margin="24,0,24,18"
+                Padding="14,11"
+                VerticalAlignment="Bottom"
+                Background="{Binding NotificationBackground}"
+                BorderBrush="{Binding NotificationAccent}"
+                BorderThickness="1"
+                CornerRadius="7"
+                Panel.ZIndex="100"
+                Visibility="{Binding NotificationVisibility}"
+                AutomationProperties.LiveSetting="Polite"
+                AutomationProperties.Name="Notificação do aplicativo">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Width="22"
+                        Height="22"
+                        BorderBrush="{Binding NotificationAccent}"
+                        BorderThickness="1"
+                        CornerRadius="11">
+                    <TextBlock Text="{Binding NotificationIcon}"
+                               Foreground="{Binding NotificationAccent}"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1"
+                           Margin="8,0,12,0"
+                           Text="{Binding NotificationTitle}"
+                           Foreground="{Binding NotificationAccent}"
+                           FontSize="10"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2"
+                           Text="{Binding NotificationMessage}"
+                           FontSize="10"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="3"
+                        Width="30"
+                        Height="30"
+                        Content="×"
+                        Command="{Binding DismissNotificationCommand}"
+                        Style="{StaticResource NavigationButtonStyle}"
+                        ToolTip="Fechar notificação (Esc)"
+                        AutomationProperties.Name="Fechar notificação" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

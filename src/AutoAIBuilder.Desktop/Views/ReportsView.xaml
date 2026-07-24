@@ -1,0 +1,129 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16"
+                Style="{DynamicResource CardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Relatório de prontidão"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="{Binding ReportGeneratedAt}"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="9" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Margin="0,0,8,0"
+                            Content="Atualizar relatório"
+                            Command="{Binding GenerateProjectReportCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" />
+                    <Button Margin="0,0,8,0"
+                            Content="TXT"
+                            Command="{Binding ExportProjectReportCommand}"
+                            ToolTip="Exportar relatório completo em texto"
+                            Style="{DynamicResource PrimaryButtonStyle}" />
+                    <Button Margin="0,0,8,0"
+                            Content="CSV"
+                            Command="{Binding ExportProjectReportCsvCommand}"
+                            ToolTip="Exportar resultados dos validadores para planilha"
+                            Style="{DynamicResource PrimaryButtonStyle}" />
+                    <Button Content="PDF"
+                            Command="{Binding ExportProjectReportPdfCommand}"
+                            ToolTip="Exportar relatório completo em PDF"
+                            Style="{DynamicResource PrimaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <Border Padding="18"
+                    Style="{DynamicResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Pré-visualização"
+                               Style="{DynamicResource SectionTitleStyle}" />
+                    <TextBox Grid.Row="1"
+                             Text="{Binding ReportContent, Mode=OneWay}"
+                             IsReadOnly="True"
+                             AcceptsReturn="True"
+                             TextWrapping="NoWrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Cascadia Mono, Consolas"
+                             FontSize="10"
+                             Style="{DynamicResource FieldStyle}" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="2">
+                <Border Padding="18"
+                        Background="#0A1624"
+                        BorderBrush="{Binding ReportReadinessAccent}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="ESTADO DO PROJETO"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="0,10,0,0"
+                                   Text="{Binding ReportReadinessStatus}"
+                                   Foreground="{Binding ReportReadinessAccent}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Margin="0,12,0,0"
+                        Padding="18"
+                        Style="{DynamicResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Conteúdo do relatório"
+                                   FontSize="12"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,12,0,0"
+                                   Text="• Dados cadastrais"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,7,0,0"
+                                   Text="• Regras técnicas"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,7,0,0"
+                                   Text="• Integridade dos arquivos"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,7,0,0"
+                                   Text="• Resultado dos validadores"
+                                   FontSize="10" />
+                        <TextBlock Margin="0,14,0,0"
+                                   Text="TXT e PDF contêm o relatório completo. CSV contém os resultados estruturados dos validadores. A gravação só ocorre após a escolha do destino."
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="9"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

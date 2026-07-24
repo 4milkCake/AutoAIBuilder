@@ -1,0 +1,17 @@
+.vs/
+.idea/
+.vscode/
+.dotnet-home/
+.dotnet-validation/
+.nuget/packages/
+bin/
+obj/
+TestResults/
+artifacts/
+*.user
+*.suo
+*.cache
+*.log
+*.trx
+coverage*.xml
+coverage*.json

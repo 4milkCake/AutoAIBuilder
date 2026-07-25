@@ -19,6 +19,7 @@
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
 
@@ -1854,6 +1855,12 @@
                                    Grid.ColumnSpan="2"
                                    Margin="12"
                                    Visibility="{Binding AutomationVisibility}" />
+
+        <views:MaskCatalogView Grid.Row="1"
+                               Grid.Column="1"
+                               Grid.ColumnSpan="2"
+                               Margin="12"
+                               Visibility="{Binding MasksVisibility}" />
 
         <!-- Right status rail -->
         <Grid Grid.Row="1"

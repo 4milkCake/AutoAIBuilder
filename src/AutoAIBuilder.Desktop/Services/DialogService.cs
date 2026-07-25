@@ -67,4 +67,26 @@ public sealed class DialogService : IDialogService
 
         return result == MessageBoxResult.Yes;
     }
+
+    public bool ConfirmMaskCatalogActivation(
+        string maskName,
+        string maskVersion,
+        bool activate)
+    {
+        var action = activate ? "Ativar" : "Desativar";
+        var consequence = activate
+            ? "Outras versões ativas da mesma máscara serão desativadas. "
+              + "Esta ação apenas seleciona a versão para integração futura; "
+              + "nenhuma automação será executada."
+            : "A máscara permanecerá instalada no catálogo e poderá ser "
+              + "reativada. Nenhuma automação será executada.";
+        var result = MessageBox.Show(
+            $"{action} “{maskName}” versão {maskVersion}?\n\n{consequence}",
+            $"{action} máscara no catálogo",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question,
+            MessageBoxResult.No);
+
+        return result == MessageBoxResult.Yes;
+    }
 }

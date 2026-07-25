@@ -4,7 +4,7 @@ namespace AutoAIBuilder.Infrastructure.Persistence;
 
 public sealed class SqliteDatabase
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
     private const int CommandTimeoutSeconds = 30;
 
     private readonly string _connectionString;
@@ -81,6 +81,12 @@ public sealed class SqliteDatabase
             if (version == 2)
             {
                 ApplyVersion3(connection);
+                version = ReadSchemaVersion(connection);
+            }
+
+            if (version == 3)
+            {
+                ApplyVersion4(connection);
                 version = ReadSchemaVersion(connection);
             }
 
@@ -335,6 +341,68 @@ public sealed class SqliteDatabase
                 'Contratos seguros, simulações e auditoria das automações');
 
             PRAGMA user_version = 3;
+            """;
+        command.Parameters.AddWithValue(
+            "$appliedAt",
+            DateTimeOffset.UtcNow.ToString("O"));
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static void ApplyVersion4(SqliteConnection connection)
+    {
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText =
+            """
+            CREATE TABLE AutomationMaskCatalog (
+                Id TEXT NOT NULL PRIMARY KEY,
+                MaskId TEXT NOT NULL,
+                MaskVersion TEXT NOT NULL,
+                MaskName TEXT NOT NULL,
+                Discipline TEXT NOT NULL,
+                Description TEXT NOT NULL,
+                MinimumApplicationVersion TEXT NOT NULL,
+                RuleCatalogId TEXT NOT NULL,
+                RuleCatalogVersion TEXT NOT NULL,
+                RuleCount INTEGER NOT NULL CHECK (RuleCount >= 0),
+                DependencyCount INTEGER NOT NULL CHECK (DependencyCount >= 0),
+                ParameterCount INTEGER NOT NULL CHECK (ParameterCount >= 0),
+                OutputCount INTEGER NOT NULL CHECK (OutputCount >= 0),
+                SupportsSimulation INTEGER NOT NULL
+                    CHECK (SupportsSimulation IN (0, 1)),
+                IsIdempotent INTEGER NOT NULL
+                    CHECK (IsIdempotent IN (0, 1)),
+                MaskJson TEXT NOT NULL,
+                RuleCatalogJson TEXT NOT NULL,
+                ContentSha256 TEXT NOT NULL,
+                MaskSourceFileName TEXT NOT NULL,
+                RuleCatalogSourceFileName TEXT NOT NULL,
+                IsActive INTEGER NOT NULL CHECK (IsActive IN (0, 1)),
+                ImportedAt TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL,
+                UNIQUE (MaskId, MaskVersion)
+            );
+
+            CREATE INDEX IX_AutomationMaskCatalog_Name
+                ON AutomationMaskCatalog (MaskName, MaskVersion);
+
+            CREATE INDEX IX_AutomationMaskCatalog_Active
+                ON AutomationMaskCatalog (IsActive DESC, UpdatedAt DESC);
+
+            CREATE UNIQUE INDEX IX_AutomationMaskCatalog_OneActiveVersion
+                ON AutomationMaskCatalog (MaskId)
+                WHERE IsActive = 1;
+
+            INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+            VALUES (
+                4,
+                $appliedAt,
+                'Catálogo seguro e versionado de máscaras de automação');
+
+            PRAGMA user_version = 4;
             """;
         command.Parameters.AddWithValue(
             "$appliedAt",

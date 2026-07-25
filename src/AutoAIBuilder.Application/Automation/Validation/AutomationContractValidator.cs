@@ -7,6 +7,10 @@ public sealed partial class AutomationContractValidator
 {
     private static readonly StringComparer IdentifierComparer =
         StringComparer.OrdinalIgnoreCase;
+    private static readonly HashSet<string> ParameterTypes =
+        new(
+            ["string", "integer", "decimal", "boolean", "choice"],
+            StringComparer.Ordinal);
 
     public AutomationValidationResult Validate(
         AutomationRuleCatalog catalog,
@@ -137,6 +141,11 @@ public sealed partial class AutomationContractValidator
             "saída",
             issues);
         ValidateUniqueNames(
+            mask.Outputs.Select(output => output.RelativePath),
+            "mask.duplicate-output-path",
+            "caminho de saída",
+            issues);
+        ValidateUniqueNames(
             mask.Dependencies.Select(dependency => dependency.Id),
             "mask.duplicate-dependency",
             "dependência",
@@ -177,6 +186,21 @@ public sealed partial class AutomationContractValidator
                 "mask.parameter-type",
                 $"parâmetro '{parameter.Name}'",
                 issues);
+            RequireText(
+                parameter.Description,
+                "mask.parameter-description",
+                $"parâmetro '{parameter.Name}'",
+                issues);
+
+            if (!string.IsNullOrWhiteSpace(parameter.Type)
+                && !ParameterTypes.Contains(parameter.Type))
+            {
+                issues.Add(AutomationValidationIssue.Error(
+                    "contrato",
+                    "mask.unsupported-parameter-type",
+                    $"O tipo '{parameter.Type}' do parâmetro "
+                    + $"'{parameter.Name}' não é suportado."));
+            }
 
             if (parameter.AllowedValues is { Count: > 0 }
                 && parameter.DefaultValue is not null
@@ -189,6 +213,15 @@ public sealed partial class AutomationContractValidator
                     "mask.invalid-default",
                     $"O valor padrão do parâmetro '{parameter.Name}' não está "
                     + "entre os valores permitidos."));
+            }
+
+            if (parameter.AllowedValues is { Count: > 0 })
+            {
+                ValidateUniqueNames(
+                    parameter.AllowedValues,
+                    "mask.duplicate-allowed-value",
+                    $"valor permitido do parâmetro '{parameter.Name}'",
+                    issues);
             }
         }
 
@@ -273,10 +306,8 @@ public sealed partial class AutomationContractValidator
         foreach (var extension in extensions)
         {
             if (string.IsNullOrWhiteSpace(extension)
-                || !extension.StartsWith('.')
-                || extension.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
-                || extension.Contains(Path.DirectorySeparatorChar)
-                || extension.Contains(Path.AltDirectorySeparatorChar))
+                || extension.Length > 16
+                || !ExtensionPattern().IsMatch(extension))
             {
                 issues.Add(AutomationValidationIssue.Error(
                     "contrato",
@@ -328,6 +359,7 @@ public sealed partial class AutomationContractValidator
         ICollection<AutomationValidationIssue> issues)
     {
         if (string.IsNullOrWhiteSpace(value)
+            || value.Length > 32
             || !SemanticVersionPattern().IsMatch(value))
         {
             issues.Add(AutomationValidationIssue.Error(
@@ -344,6 +376,7 @@ public sealed partial class AutomationContractValidator
         ICollection<AutomationValidationIssue> issues)
     {
         if (string.IsNullOrWhiteSpace(value)
+            || value.Length > 128
             || !IdentifierPattern().IsMatch(value))
         {
             issues.Add(AutomationValidationIssue.Error(
@@ -360,27 +393,61 @@ public sealed partial class AutomationContractValidator
         string owner,
         ICollection<AutomationValidationIssue> issues)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 4_096)
         {
             issues.Add(AutomationValidationIssue.Error(
                 "contrato",
                 code,
-                $"O campo obrigatório de {owner} não foi informado."));
+                $"O campo obrigatório de {owner} não foi informado ou excede "
+                + "4.096 caracteres."));
         }
     }
 
     private static bool IsSafeRelativePath(string path)
     {
-        if (string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path))
+        if (string.IsNullOrWhiteSpace(path)
+            || path.Length > 240
+            || Path.IsPathRooted(path))
         {
             return false;
         }
 
-        return !path
+        var segments = path
             .Split(
                 [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
-                StringSplitOptions.RemoveEmptyEntries)
-            .Any(segment => segment is "." or "..");
+                StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0
+            || segments.Any(
+                segment => segment is "." or ".."
+                    || segment.EndsWith(' ')
+                    || segment.EndsWith('.')
+                    || segment.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0))
+        {
+            return false;
+        }
+
+        try
+        {
+            var root = Path.GetFullPath(
+                Path.Combine(
+                    Path.GetPathRoot(Environment.CurrentDirectory)
+                    ?? Path.DirectorySeparatorChar.ToString(),
+                    "autoaibuilder-contract-root"));
+            var candidate = Path.GetFullPath(Path.Combine(root, path));
+            return candidate.StartsWith(
+                Path.TrimEndingDirectorySeparator(root)
+                + Path.DirectorySeparatorChar,
+                OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal);
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException
+                or NotSupportedException
+                or PathTooLongException)
+        {
+            return false;
+        }
     }
 
     [GeneratedRegex(@"^[a-z0-9]+(?:[.-][a-z0-9]+)*$", RegexOptions.CultureInvariant)]
@@ -388,4 +455,7 @@ public sealed partial class AutomationContractValidator
 
     [GeneratedRegex(@"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$", RegexOptions.CultureInvariant)]
     private static partial Regex SemanticVersionPattern();
+
+    [GeneratedRegex(@"^\.[A-Za-z0-9]+$", RegexOptions.CultureInvariant)]
+    private static partial Regex ExtensionPattern();
 }

@@ -1,0 +1,458 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.MaskCatalogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.Name="Catálogo seguro de máscaras">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16,13"
+                Background="#0D1D30"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Marco 11.6A — Catálogo seguro de máscaras"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="Importar contrato → validar → detectar conflito → armazenar inativo → ativar versão para integração futura."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="9"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Padding="12,6"
+                        Background="#163125"
+                        BorderBrush="#27734B"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="SEM ADAPTADOR • SEM EXECUÇÃO"
+                               Foreground="#6EE7A2"
+                               FontSize="9"
+                               FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="390" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="1. Contrato da máscara"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="JSON conforme automation-mask.schema.json"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <Border Margin="0,8,0,0"
+                                    Padding="9,7"
+                                    Background="#091523"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding MaskContractPathDisplay}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8"
+                                           TextWrapping="Wrap"
+                                           ToolTip="{Binding MaskContractPath}" />
+                            </Border>
+                            <Button Margin="0,8,0,0"
+                                    Content="Selecionar contrato da máscara"
+                                    Command="{Binding ChooseMaskContractCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="2. Catálogo de regras"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="JSON conforme automation-rule-catalog.schema.json"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <Border Margin="0,8,0,0"
+                                    Padding="9,7"
+                                    Background="#091523"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding RuleCatalogPathDisplay}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8"
+                                           TextWrapping="Wrap"
+                                           ToolTip="{Binding RuleCatalogPath}" />
+                            </Border>
+                            <Button Margin="0,8,0,0"
+                                    Content="Selecionar catálogo de regras"
+                                    Command="{Binding ChooseRuleCatalogCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="3. Análise local"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="{Binding MaskCatalogSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <Border Margin="0,10,0,0"
+                                    Padding="10,6"
+                                    Background="#091523"
+                                    BorderBrush="{Binding MaskCatalogStageAccent}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding MaskCatalogStage}"
+                                           Foreground="{Binding MaskCatalogStageAccent}"
+                                           FontSize="10"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                            <ProgressBar Margin="0,10,0,0"
+                                         IsIndeterminate="True"
+                                         Visibility="{Binding MaskCatalogBusyVisibility}"
+                                         AutomationProperties.Name="Analisando contratos" />
+                            <Button Margin="0,11,0,0"
+                                    Content="Analisar pacote com segurança"
+                                    Command="{Binding AnalyzeMaskPackageCommand}"
+                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                            <Button Margin="0,8,0,0"
+                                    Content="Limpar seleção"
+                                    Command="{Binding ClearMaskPackageCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="13"
+                            Background="#102641"
+                            BorderBrush="#28557A"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Garantias do catálogo"
+                                       Foreground="#8DD0FF"
+                                       FontSize="11"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="• Apenas arquivos JSON locais&#x0a;• Limite de 1 MiB por contrato&#x0a;• Propriedades desconhecidas rejeitadas&#x0a;• Mesma versão nunca é sobrescrita&#x0a;• Originais não são movidos nem alterados&#x0a;• Importação não carrega código executável"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       LineHeight="16"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer Grid.Column="2"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <Grid>
+                            <StackPanel Visibility="{Binding MaskPreviewEmptyVisibility}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,34">
+                                <TextBlock Text="◫"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                           FontSize="34"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="A pré-visualização segura aparecerá aqui"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Text="Nenhum contrato será armazenado antes da análise e da confirmação."
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding MaskPreviewVisibility}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Pré-visualização do pacote"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="9" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Text="{Binding MaskPreviewName}"
+                                                   FontSize="17"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,3,0,0"
+                                                   Text="{Binding MaskPreviewIdentity}"
+                                                   Foreground="#8DD0FF"
+                                                   FontFamily="Consolas"
+                                                   FontSize="9" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1"
+                                            Padding="10,5"
+                                            Background="#091523"
+                                            BorderBrush="{Binding MaskCatalogStageAccent}"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding MaskCatalogStage}"
+                                                   Foreground="{Binding MaskCatalogStageAccent}"
+                                                   FontSize="8"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="{Binding MaskPreviewDescription}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Margin="0,0,5,0"
+                                            Padding="10"
+                                            Background="#091523"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                        <StackPanel>
+                                            <TextBlock Text="Catálogo de regras"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding MaskPreviewCatalogIdentity}"
+                                                       FontFamily="Consolas"
+                                                       FontSize="9"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="1"
+                                            Margin="5,0,0,0"
+                                            Padding="10"
+                                            Background="#091523"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                        <StackPanel>
+                                            <TextBlock Text="Conteúdo declarado"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding MaskPreviewMetrics}"
+                                                       FontSize="9"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <TextBlock Margin="0,13,0,0"
+                                           Text="Extensões aceitas"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="{Binding MaskPreviewExtensions}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Dependências declaradas"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="{Binding MaskPreviewDependencies}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="SHA-256 do pacote normalizado"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="{Binding MaskPreviewSha256}"
+                                           FontFamily="Consolas"
+                                           FontSize="8"
+                                           TextWrapping="Wrap" />
+
+                                <ItemsControl Margin="0,12,0,0"
+                                              ItemsSource="{Binding MaskImportIssues}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,6"
+                                                    Padding="9"
+                                                    Background="#181722"
+                                                    BorderBrush="{Binding Accent}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Severity}"
+                                                               Foreground="{Binding Accent}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding Message}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Margin="0,11,0,0"
+                                        Content="Importar como inativa"
+                                        Command="{Binding ImportMaskPackageCommand}"
+                                        Style="{DynamicResource PrimaryButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Máscaras catalogadas"
+                                               Style="{DynamicResource SectionTitleStyle}" />
+                                    <TextBlock Text="{Binding MaskCatalogCountSummary}"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <Border Grid.Column="1"
+                                        Padding="10,5"
+                                        Background="#172538"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        VerticalAlignment="Top">
+                                    <TextBlock Text="Execução bloqueada no 11.6A"
+                                               Foreground="#F8C33A"
+                                               FontSize="8" />
+                                </Border>
+                            </Grid>
+
+                            <StackPanel Margin="0,24"
+                                        Visibility="{Binding EmptyMaskCatalogVisibility}"
+                                        HorizontalAlignment="Center">
+                                <TextBlock Text="Nenhuma máscara importada"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Text="Analise um par de contratos JSON para iniciar o catálogo."
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextAlignment="Center" />
+                            </StackPanel>
+
+                            <ItemsControl Margin="0,12,0,0"
+                                          ItemsSource="{Binding MaskCatalogEntries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,9"
+                                                Padding="13"
+                                                Background="#091523"
+                                                BorderBrush="{Binding StatusAccent}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="170" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding Identity}"
+                                                               Foreground="#8DD0FF"
+                                                               FontFamily="Consolas"
+                                                               FontSize="8" />
+                                                    <TextBlock Margin="0,7,0,0"
+                                                               Text="{Binding Description}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,7,0,0"
+                                                               Text="{Binding Metrics}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding Capabilities}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding Sources}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1"
+                                                            Margin="12,0,0,0">
+                                                    <TextBlock Text="{Binding Status}"
+                                                               Foreground="{Binding StatusAccent}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold"
+                                                               TextAlignment="Right" />
+                                                    <TextBlock Margin="0,5,0,0"
+                                                               Text="{Binding RuleCatalogIdentity}"
+                                                               FontFamily="Consolas"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextAlignment="Right"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding ImportedAt}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextAlignment="Right" />
+                                                    <Button Margin="0,10,0,0"
+                                                            Content="{Binding ToggleAction}"
+                                                            Command="{Binding DataContext.ToggleMaskCatalogEntryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{DynamicResource SecondaryButtonStyle}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

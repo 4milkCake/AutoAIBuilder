@@ -11,6 +11,7 @@ public sealed class AutomationContractJsonSerializer :
 
     public AutomationRuleCatalog DeserializeRuleCatalog(string json)
     {
+        ValidateRuleCatalogDocument(json);
         var catalog = Deserialize<AutomationRuleCatalog>(
             json,
             "catálogo de regras");
@@ -27,6 +28,7 @@ public sealed class AutomationContractJsonSerializer :
 
     public AutomationMaskDefinition DeserializeMask(string json)
     {
+        ValidateMaskDocument(json);
         var mask = Deserialize<AutomationMaskDefinition>(json, "máscara");
         if (mask.AcceptedExtensions is null
             || mask.RequiredRuleIds is null
@@ -79,6 +81,177 @@ public sealed class AutomationContractJsonSerializer :
             throw new InvalidDataException(
                 $"O JSON do {contractName} não segue o formato esperado.",
                 exception);
+        }
+    }
+
+    private static void ValidateRuleCatalogDocument(string json)
+    {
+        using var document = ParseDocument(json, "catálogo de regras");
+        var root = RequireObject(document.RootElement, "catálogo de regras");
+        RequireProperties(
+            root,
+            "catálogo de regras",
+            "schemaVersion",
+            "catalogId",
+            "version",
+            "rules");
+        foreach (var rule in RequireArray(root, "rules", "catálogo de regras"))
+        {
+            RequireProperties(
+                RequireObject(rule, "regra"),
+                "regra",
+                "id",
+                "version",
+                "name",
+                "discipline",
+                "severity",
+                "description",
+                "condition",
+                "source",
+                "supportedExtensions",
+                "isEnabled");
+        }
+    }
+
+    private static void ValidateMaskDocument(string json)
+    {
+        using var document = ParseDocument(json, "máscara");
+        var root = RequireObject(document.RootElement, "máscara");
+        RequireProperties(
+            root,
+            "máscara",
+            "schemaVersion",
+            "id",
+            "version",
+            "name",
+            "discipline",
+            "description",
+            "minimumApplicationVersion",
+            "acceptedExtensions",
+            "requiredRuleIds",
+            "dependencies",
+            "parameters",
+            "outputs",
+            "preconditions",
+            "postconditions",
+            "supportsSimulation",
+            "isIdempotent");
+
+        ValidateArrayObjects(
+            root,
+            "dependencies",
+            "dependência",
+            "id",
+            "minimumVersion",
+            "isRequired");
+        ValidateArrayObjects(
+            root,
+            "parameters",
+            "parâmetro",
+            "name",
+            "type",
+            "description",
+            "isRequired");
+        ValidateArrayObjects(
+            root,
+            "outputs",
+            "saída",
+            "id",
+            "description",
+            "relativePath",
+            "isRequired");
+        ValidateArrayObjects(
+            root,
+            "preconditions",
+            "pré-condição",
+            "id",
+            "description",
+            "isBlocking");
+        ValidateArrayObjects(
+            root,
+            "postconditions",
+            "pós-condição",
+            "id",
+            "description",
+            "isBlocking");
+    }
+
+    private static JsonDocument ParseDocument(string json, string contractName)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidDataException(
+                $"O JSON do {contractName} está vazio.");
+        }
+
+        try
+        {
+            return JsonDocument.Parse(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException(
+                $"O JSON do {contractName} não segue o formato esperado.",
+                exception);
+        }
+    }
+
+    private static JsonElement RequireObject(
+        JsonElement element,
+        string owner)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException(
+                $"O documento de {owner} deve ser um objeto JSON.");
+        }
+
+        return element;
+    }
+
+    private static JsonElement.ArrayEnumerator RequireArray(
+        JsonElement owner,
+        string propertyName,
+        string ownerName)
+    {
+        if (!owner.TryGetProperty(propertyName, out var property)
+            || property.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidDataException(
+                $"O campo '{propertyName}' de {ownerName} deve ser uma lista.");
+        }
+
+        return property.EnumerateArray();
+    }
+
+    private static void ValidateArrayObjects(
+        JsonElement root,
+        string propertyName,
+        string itemName,
+        params string[] requiredProperties)
+    {
+        foreach (var item in RequireArray(root, propertyName, "máscara"))
+        {
+            RequireProperties(
+                RequireObject(item, itemName),
+                itemName,
+                requiredProperties);
+        }
+    }
+
+    private static void RequireProperties(
+        JsonElement element,
+        string owner,
+        params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (!element.TryGetProperty(propertyName, out _))
+            {
+                throw new InvalidDataException(
+                    $"O campo obrigatório '{propertyName}' não foi informado "
+                    + $"em {owner}.");
+            }
         }
     }
 

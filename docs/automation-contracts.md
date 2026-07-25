@@ -90,3 +90,17 @@ Ele produz uma cópia byte a byte e um manifesto, sem interpretar o arquivo. A
 implementação e os limites estão documentados em
 [Cópia técnica verificada](verified-copy-pilot.md). Nenhuma máscara gráfica real
 é considerada instalada.
+
+## Marco 11.6A
+
+O módulo `Máscaras` recebe um contrato de máscara e um catálogo de regras,
+executa a validação completa e apresenta uma pré-visualização antes de qualquer
+gravação. Pacotes aprovados são persistidos inativos no esquema 4 do SQLite.
+
+A identidade `maskId@maskVersion` é imutável: conteúdo diferente exige uma nova
+versão. Conteúdo idêntico não é duplicado. Uma restrição do banco permite apenas
+uma versão ativa de cada máscara, mas esse estado representa somente a escolha
+para integração futura.
+
+O catálogo não carrega adaptadores, scripts, DLLs, macros ou executáveis. Os
+detalhes estão em [Catálogo seguro de máscaras](mask-catalog.md).

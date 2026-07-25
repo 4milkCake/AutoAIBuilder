@@ -33,6 +33,7 @@ public sealed class WpfResourceSmokeTests
             {
                 "app.baml",
                 "mainwindow.baml",
+                "views/maskcatalogview.baml",
                 "views/automationpilotview.baml"
             },
             resources.ToArray(),

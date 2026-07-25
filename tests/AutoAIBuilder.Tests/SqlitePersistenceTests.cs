@@ -227,6 +227,53 @@ public sealed class SqlitePersistenceTests
             WHERE type = 'table' AND name = 'AutomationAudits';
             """;
         Assert.AreEqual(1L, auditCommand.ExecuteScalar());
+
+        using var catalogCommand = verification.CreateCommand();
+        catalogCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'AutomationMaskCatalog';
+            """;
+        Assert.AreEqual(1L, catalogCommand.ExecuteScalar());
+    }
+
+    [TestMethod]
+    public void Initialize_UpgradesVersionThreeDatabaseToMaskCatalogSchema()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(_databasePath)!);
+        using (var connection = new SqliteConnection(
+                   $"Data Source={_databasePath}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                CREATE TABLE SchemaMigrations (
+                    Version INTEGER NOT NULL PRIMARY KEY,
+                    AppliedAt TEXT NOT NULL,
+                    Description TEXT NOT NULL
+                );
+                INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+                VALUES (3, '2026-01-01T00:00:00.0000000+00:00', 'Teste');
+                PRAGMA user_version = 3;
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        var database = new SqliteDatabase(_databasePath);
+        database.Initialize();
+
+        Assert.AreEqual(4, database.GetSchemaVersion());
+        using var verification = database.OpenConnection();
+        using var commandVerification = verification.CreateCommand();
+        commandVerification.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'AutomationMaskCatalog';
+            """;
+        Assert.AreEqual(1L, commandVerification.ExecuteScalar());
     }
 
     [TestMethod]

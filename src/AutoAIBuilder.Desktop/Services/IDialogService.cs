@@ -14,4 +14,9 @@ public interface IDialogService
         string fileName,
         string outputRoot,
         string sha256);
+
+    bool ConfirmMaskCatalogActivation(
+        string maskName,
+        string maskVersion,
+        bool activate);
 }

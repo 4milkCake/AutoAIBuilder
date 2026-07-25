@@ -1,0 +1,26 @@
+namespace AutoAIBuilder.Application.Automation.Catalog;
+
+public sealed record AutomationMaskCatalogEntry(
+    Guid Id,
+    string MaskId,
+    string MaskVersion,
+    string MaskName,
+    string Discipline,
+    string Description,
+    string MinimumApplicationVersion,
+    string RuleCatalogId,
+    string RuleCatalogVersion,
+    int RuleCount,
+    int DependencyCount,
+    int ParameterCount,
+    int OutputCount,
+    bool SupportsSimulation,
+    bool IsIdempotent,
+    string MaskJson,
+    string RuleCatalogJson,
+    string ContentSha256,
+    string MaskSourceFileName,
+    string RuleCatalogSourceFileName,
+    bool IsActive,
+    DateTimeOffset ImportedAt,
+    DateTimeOffset UpdatedAt);

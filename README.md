@@ -57,6 +57,14 @@ explicitamente a aplicação. O resultado contém uma cópia byte a byte e um
 manifesto JSON; o original é comprovado por SHA-256 antes e depois. Consulte
 [Marco 11.5 — Cópia técnica verificada](docs/verified-copy-pilot.md).
 
+O Marco 11.6A habilita o módulo `Máscaras` como um catálogo declarativo seguro.
+Um contrato de máscara e seu catálogo exato de regras são analisados,
+normalizados e identificados por SHA-256 antes de serem armazenados inativos.
+Conflitos de conteúdo nunca sobrescrevem a mesma versão, e somente uma versão
+por identificador pode ser marcada para integração futura. Importar ou ativar
+não carrega código nem executa automações. Consulte
+[Marco 11.6A — Catálogo seguro de máscaras](docs/mask-catalog.md).
+
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma
 idempotente. Eles permanecem intactos como fonte legada e nunca são apagados
@@ -126,6 +134,7 @@ corrompidas são ignoradas na leitura sem impedir a inicialização. O arquivo a
 anteriores, eventos excessivamente grandes são reduzidos e valores com nomes de
 credenciais, senhas, tokens ou chaves são removidos antes da gravação.
 
-Leitura e edição CAD, aplicação visual das máscaras definitivas e integrações
-reais de IA ainda não foram implementadas. O piloto 11.5 não interpreta o
-conteúdo técnico dos arquivos.
+Leitura e edição CAD, aplicação visual das máscaras definitivas, adaptadores
+dessas máscaras e integrações reais de IA ainda não foram implementadas. O
+piloto 11.5 não interpreta o conteúdo técnico dos arquivos, e o catálogo 11.6A
+armazena somente contratos declarativos.

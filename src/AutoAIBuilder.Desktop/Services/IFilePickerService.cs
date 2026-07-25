@@ -4,6 +4,10 @@ public interface IFilePickerService
 {
     IReadOnlyList<string> PickProjectFiles();
 
+    string? PickAutomationMaskContract();
+
+    string? PickAutomationRuleCatalog();
+
     string? PickAutomationOutputDirectory(string? currentDirectory);
 
     string? PickDataBackupDestination(string suggestedFileName);

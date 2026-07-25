@@ -28,6 +28,8 @@ O `MainWindowViewModel` é parcial e está separado por responsabilidade:
 - `MainWindowViewModel.History.cs`: histórico local;
 - `MainWindowViewModel.Diagnostics.cs`: diagnóstico e execuções operacionais;
 - `MainWindowViewModel.DataMaintenance.cs`: backup, restauração e realocação;
+- `MainWindowViewModel.MaskCatalog.cs`: análise e catálogo declarativo de
+  máscaras;
 - `MainWindowViewModel.cs`: estado compartilhado, projetos, arquivos e painel.
 
 Essa divisão preserva os bindings atuais enquanto permite extrair ViewModels
@@ -94,7 +96,15 @@ manifesto; não interpreta o conteúdo, não abre ferramentas CAD e não represe
 uma máscara definitiva. A tela exige simulação auditada e confirmação explícita
 antes da aplicação. Consulte [Cópia técnica verificada](verified-copy-pilot.md).
 
-Máscaras gráficas, CAD e agentes continuam desconectados.
+O Marco 11.6A adiciona `AutomationMaskCatalogService` antes da fronteira de
+execução. Ele lê dois JSONs locais com limite de tamanho, valida todos os campos
+obrigatórios, normaliza os contratos, calcula SHA-256 e detecta repetição ou
+conflito de conteúdo. `SqliteAutomationMaskCatalogRepository` mantém versões
+lado a lado e garante no banco que apenas uma versão de cada identidade possa
+estar ativa. Ativação não significa execução e nenhum adaptador é resolvido
+pelo catálogo.
+
+Máscaras gráficas, adaptadores CAD e agentes continuam desconectados.
 
 ## Diagnóstico e falhas
 
@@ -124,6 +134,11 @@ O esquema 3 acrescenta `AutomationAudits`, com contrato e versão da máscara,
 snapshots SHA-256, modo, estado, chave de idempotência, saídas e caminhos de
 publicação ou recuperação. Auditorias em andamento no encerramento são marcadas
 como interrompidas no próximo início, preservando qualquer artefato existente.
+
+O esquema 4 acrescenta `AutomationMaskCatalog`, com os contratos normalizados,
+identidade e versão da máscara e das regras, SHA-256, origem resumida e estado
+ativo ou inativo. A migração é aditiva e não altera projetos nem auditorias
+existentes.
 
 Os JSON das versões anteriores são tratados como fontes legadas. A migração é
 idempotente, registra cada origem em `DataMigrations` e preserva os arquivos

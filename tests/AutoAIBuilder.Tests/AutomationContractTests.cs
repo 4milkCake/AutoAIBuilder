@@ -1,6 +1,7 @@
 using AutoAIBuilder.Application.Automation.Contracts;
 using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Infrastructure.Automation;
+using System.Text.Json.Nodes;
 
 namespace AutoAIBuilder.Tests;
 
@@ -82,6 +83,14 @@ public sealed class AutomationContractTests
                   "id": "incompleta"
                 }
                 """));
+
+        var missingExecutionFlag = JsonNode
+            .Parse(json)!
+            .AsObject();
+        missingExecutionFlag.Remove("isIdempotent");
+        Assert.ThrowsException<InvalidDataException>(
+            () => serializer.DeserializeMask(
+                missingExecutionFlag.ToJsonString()));
     }
 }
 

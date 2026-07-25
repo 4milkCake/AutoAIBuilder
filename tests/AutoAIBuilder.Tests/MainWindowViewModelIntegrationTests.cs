@@ -13,6 +13,7 @@ using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
@@ -62,7 +63,7 @@ public sealed class MainWindowViewModelIntegrationTests
     }
 
     [TestMethod]
-    public void FullReadinessFlow_CreatesProjectValidatesReportsAndKeepsAutomationDisconnected()
+    public void FullReadinessFlow_CreatesProjectAndKeepsRealAdaptersDisconnected()
     {
         var logger = new InMemoryDiagnosticLogger();
         var viewModel = CreateViewModel(
@@ -78,7 +79,7 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.IsTrue(viewModel.ValidationResults.Count > 0);
         StringAssert.Contains(viewModel.ReportContent, "RELATÓRIO DE PRONTIDÃO");
         Assert.IsTrue(viewModel.Navigation.Single(item => item.Label == "Automação").IsAvailable);
-        Assert.IsFalse(viewModel.Navigation.Single(item => item.Label == "Máscaras").IsAvailable);
+        Assert.IsTrue(viewModel.Navigation.Single(item => item.Label == "Máscaras").IsAvailable);
     }
 
     [TestMethod]
@@ -126,6 +127,58 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.AreEqual(
             "arquivo técnico de integração",
             File.ReadAllText(inputPath));
+    }
+
+    [TestMethod]
+    public async Task MaskCatalog_AnalyzesImportsInactiveAndActivatesWithoutExecution()
+    {
+        var logger = new InMemoryDiagnosticLogger();
+        var serializer = new AutomationContractJsonSerializer();
+        var maskPath = Path.Combine(_directory, "mask.json");
+        var catalogPath = Path.Combine(_directory, "rules.json");
+        File.WriteAllText(
+            maskPath,
+            serializer.Serialize(AutomationTestData.CreateMask()));
+        File.WriteAllText(
+            catalogPath,
+            serializer.Serialize(AutomationTestData.CreateCatalog()));
+        var viewModel = CreateViewModel(
+            logger,
+            new StubDiagnosticService(logger),
+            filePicker: new MaskPackageFilePicker(
+                maskPath,
+                catalogPath),
+            dialogService: new AcceptingMaskDialogService());
+
+        viewModel.OpenMasksCommand.Execute(null);
+        viewModel.ChooseMaskContractCommand.Execute(null);
+        viewModel.ChooseRuleCatalogCommand.Execute(null);
+        await ((AsyncCommand)viewModel.AnalyzeMaskPackageCommand)
+            .ExecuteAsync();
+
+        Assert.AreEqual(WorkspaceSection.Masks, viewModel.CurrentSection);
+        Assert.AreEqual(
+            System.Windows.Visibility.Visible,
+            viewModel.MasksVisibility);
+        Assert.AreEqual("ANÁLISE APROVADA", viewModel.MaskCatalogStage);
+        Assert.IsTrue(viewModel.ImportMaskPackageCommand.CanExecute(null));
+
+        viewModel.ImportMaskPackageCommand.Execute(null);
+
+        Assert.AreEqual("IMPORTADA — INATIVA", viewModel.MaskCatalogStage);
+        Assert.AreEqual(1, viewModel.ImportedMaskCount);
+        Assert.AreEqual(0, viewModel.ActiveMaskCount);
+        Assert.IsFalse(viewModel.MaskCatalogEntries.Single().IsActive);
+
+        viewModel.ToggleMaskCatalogEntryCommand.Execute(
+            viewModel.MaskCatalogEntries.Single());
+
+        Assert.AreEqual("ATIVA PARA INTEGRAÇÃO", viewModel.MaskCatalogStage);
+        Assert.AreEqual(1, viewModel.ActiveMaskCount);
+        Assert.IsTrue(viewModel.MaskCatalogEntries.Single().IsActive);
+        Assert.AreEqual(
+            serializer.Serialize(AutomationTestData.CreateMask()),
+            File.ReadAllText(maskPath));
     }
 
     [TestMethod]
@@ -205,6 +258,10 @@ public sealed class MainWindowViewModelIntegrationTests
                 automationAuditRepository,
                 [new VerifiedCopyPilotValidator()]),
             automationAuditRepository);
+        var maskCatalogService = new AutomationMaskCatalogService(
+            new SqliteAutomationMaskCatalogRepository(operationDatabase),
+            new AutomationContractJsonSerializer(),
+            new AutomationContractValidator());
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -224,7 +281,8 @@ public sealed class MainWindowViewModelIntegrationTests
             dialogService ?? new RejectingDialogService(),
             dataMaintenanceService ?? new StubDataMaintenanceService(_directory),
             operationCoordinator,
-            verifiedCopyPilot);
+            verifiedCopyPilot,
+            maskCatalogService);
     }
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger
@@ -271,6 +329,10 @@ public sealed class MainWindowViewModelIntegrationTests
     {
         public IReadOnlyList<string> PickProjectFiles() => [];
 
+        public string? PickAutomationMaskContract() => null;
+
+        public string? PickAutomationRuleCatalog() => null;
+
         public string? PickAutomationOutputDirectory(string? currentDirectory) =>
             null;
 
@@ -285,6 +347,10 @@ public sealed class MainWindowViewModelIntegrationTests
         : IFilePickerService
     {
         public IReadOnlyList<string> PickProjectFiles() => [];
+
+        public string? PickAutomationMaskContract() => null;
+
+        public string? PickAutomationRuleCatalog() => null;
 
         public string? PickAutomationOutputDirectory(string? currentDirectory) =>
             null;
@@ -303,8 +369,33 @@ public sealed class MainWindowViewModelIntegrationTests
     {
         public IReadOnlyList<string> PickProjectFiles() => [inputPath];
 
+        public string? PickAutomationMaskContract() => null;
+
+        public string? PickAutomationRuleCatalog() => null;
+
         public string? PickAutomationOutputDirectory(string? currentDirectory) =>
             outputDirectory;
+
+        public string? PickDataBackupDestination(string suggestedFileName) =>
+            null;
+
+        public string? PickDataBackupSource() => null;
+
+        public string? PickDataDirectory(string currentDirectory) => null;
+    }
+
+    private sealed class MaskPackageFilePicker(
+        string maskPath,
+        string catalogPath) : IFilePickerService
+    {
+        public IReadOnlyList<string> PickProjectFiles() => [];
+
+        public string? PickAutomationMaskContract() => maskPath;
+
+        public string? PickAutomationRuleCatalog() => catalogPath;
+
+        public string? PickAutomationOutputDirectory(string? currentDirectory) =>
+            null;
 
         public string? PickDataBackupDestination(string suggestedFileName) =>
             null;
@@ -348,6 +439,11 @@ public sealed class MainWindowViewModelIntegrationTests
             string fileName,
             string outputRoot,
             string sha256) => false;
+
+        public bool ConfirmMaskCatalogActivation(
+            string maskName,
+            string maskVersion,
+            bool activate) => false;
     }
 
     private sealed class AcceptingPilotDialogService : IDialogService
@@ -364,6 +460,32 @@ public sealed class MainWindowViewModelIntegrationTests
             string fileName,
             string outputRoot,
             string sha256) => true;
+
+        public bool ConfirmMaskCatalogActivation(
+            string maskName,
+            string maskVersion,
+            bool activate) => false;
+    }
+
+    private sealed class AcceptingMaskDialogService : IDialogService
+    {
+        public bool ConfirmRemoveFileReference(string fileName) => false;
+
+        public bool ConfirmRestoreDataBackup(string backupPath) => false;
+
+        public bool ConfirmDataDirectoryChange(
+            string currentDirectory,
+            string newDirectory) => false;
+
+        public bool ConfirmVerifiedCopyExecution(
+            string fileName,
+            string outputRoot,
+            string sha256) => false;
+
+        public bool ConfirmMaskCatalogActivation(
+            string maskName,
+            string maskVersion,
+            bool activate) => true;
     }
 
     private sealed class StubDataMaintenanceService(string directory)

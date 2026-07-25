@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
@@ -44,6 +45,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IDataMaintenanceService _dataMaintenanceService;
     private readonly IOperationCoordinator _operationCoordinator;
     private readonly IVerifiedCopyPilotService _verifiedCopyPilotService;
+    private readonly IAutomationMaskCatalogService _automationMaskCatalogService;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -122,7 +124,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IDialogService dialogService,
         IDataMaintenanceService dataMaintenanceService,
         IOperationCoordinator operationCoordinator,
-        IVerifiedCopyPilotService verifiedCopyPilotService)
+        IVerifiedCopyPilotService verifiedCopyPilotService,
+        IAutomationMaskCatalogService automationMaskCatalogService)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -142,6 +145,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _dataMaintenanceService = dataMaintenanceService;
         _operationCoordinator = operationCoordinator;
         _verifiedCopyPilotService = verifiedCopyPilotService;
+        _automationMaskCatalogService = automationMaskCatalogService;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -152,7 +156,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             new(WorkspaceSection.Dashboard, "▦", "Painel principal", true, null, "Ctrl+1"),
             new(WorkspaceSection.Projects, "▤", "Projetos", false, null, "Ctrl+2"),
             new(WorkspaceSection.Files, "□", "Arquivos", false, null, "Ctrl+3"),
-            new(null, "◫", "Máscaras", false, null),
+            new(WorkspaceSection.Masks, "◫", "Máscaras", false, "Catálogo"),
             new(WorkspaceSection.Automation, "⌘", "Automação", false, "Piloto", "Ctrl+9"),
             new(null, "✦", "Agentes IA", false, null),
             new(null, "▥", "Bibliotecas", false, null),
@@ -192,6 +196,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             "Regras",
             "Validação",
             "Relatórios",
+            "Máscaras",
             "Automação",
             "Configurações",
             "Sistema"
@@ -219,6 +224,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         OpenDashboardCommand = new RelayCommand(() => Navigate(WorkspaceSection.Dashboard));
         OpenProjectsCommand = new RelayCommand(() => Navigate(WorkspaceSection.Projects));
         OpenFilesCommand = new RelayCommand(() => Navigate(WorkspaceSection.Files));
+        OpenMasksCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.Masks));
         OpenAutomationCommand = new RelayCommand(
             () => Navigate(WorkspaceSection.Automation));
         OpenProjectRulesCommand = new RelayCommand(() => Navigate(WorkspaceSection.ProjectRules));
@@ -285,6 +292,27 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             ExportProjectReportPdf,
             () => _currentReport is not null);
         RefreshDiagnosticsCommand = new RelayCommand(RefreshDiagnostics);
+        ChooseMaskContractCommand = new RelayCommand(
+            ChooseMaskContract,
+            () => !IsMaskCatalogBusy);
+        ChooseRuleCatalogCommand = new RelayCommand(
+            ChooseRuleCatalog,
+            () => !IsMaskCatalogBusy);
+        AnalyzeMaskPackageCommand = new AsyncCommand(
+            AnalyzeMaskPackageAsync,
+            CanAnalyzeMaskPackage,
+            ReportMaskCatalogFailure,
+            TimeSpan.FromMinutes(1));
+        ImportMaskPackageCommand = new RelayCommand(
+            ImportMaskPackage,
+            CanImportMaskPackage);
+        ClearMaskPackageCommand = new RelayCommand(
+            ClearMaskPackage,
+            () => !IsMaskCatalogBusy);
+        ToggleMaskCatalogEntryCommand =
+            new RelayCommand<AutomationMaskCatalogItemViewModel>(
+                ToggleMaskCatalogEntry,
+                item => item is not null && !IsMaskCatalogBusy);
         ChooseAutomationOutputCommand = new RelayCommand(
             ChooseAutomationOutputDirectory,
             () => !IsAutomationPilotRunning);
@@ -355,6 +383,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ICommand OpenDashboardCommand { get; }
     public ICommand OpenProjectsCommand { get; }
     public ICommand OpenFilesCommand { get; }
+    public ICommand OpenMasksCommand { get; }
     public ICommand OpenAutomationCommand { get; }
     public ICommand OpenProjectRulesCommand { get; }
     public ICommand OpenValidatorsCommand { get; }
@@ -436,6 +465,11 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public Visibility FilesVisibility =>
         CurrentSection == WorkspaceSection.Files ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility MasksVisibility =>
+        CurrentSection == WorkspaceSection.Masks
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     public Visibility ProjectRulesVisibility =>
         CurrentSection == WorkspaceSection.ProjectRules ? Visibility.Visible : Visibility.Collapsed;
 
@@ -486,6 +520,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(DashboardVisibility));
             OnPropertyChanged(nameof(ProjectsVisibility));
             OnPropertyChanged(nameof(FilesVisibility));
+            OnPropertyChanged(nameof(MasksVisibility));
             OnPropertyChanged(nameof(AutomationVisibility));
             OnPropertyChanged(nameof(ProjectRulesVisibility));
             OnPropertyChanged(nameof(SettingsVisibility));

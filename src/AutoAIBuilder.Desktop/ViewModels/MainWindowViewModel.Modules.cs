@@ -39,6 +39,17 @@ public sealed partial class MainWindowViewModel
                 StatusMessage = "Catálogo e integridade dos arquivos atualizados.";
             }),
         new WorkspaceModule(
+            WorkspaceSection.Masks,
+            () => "Catálogo seguro carregado; nenhuma máscara importada é "
+                  + "executável nesta etapa.",
+            activate: RefreshMaskCatalog,
+            refresh: () =>
+            {
+                RefreshMaskCatalog();
+                StatusMessage =
+                    "Catálogo de máscaras atualizado a partir do banco local.";
+            }),
+        new WorkspaceModule(
             WorkspaceSection.Automation,
             () => SelectedProject is null
                 ? "Selecione um projeto ativo para usar o piloto seguro."
@@ -159,12 +170,12 @@ public sealed partial class MainWindowViewModel
 
         (NotificationTitle, NotificationIcon, NotificationAccent, NotificationBackground) =
             notification.Tone switch
-        {
-            NotificationTone.Success => ("Concluído", "✓", "#36D17C", "#102B22"),
-            NotificationTone.Warning => ("Atenção", "!", "#F8C33A", "#332A12"),
-            NotificationTone.Error => ("Não foi possível concluir", "×", "#FF5D68", "#351A23"),
-            _ => ("Informação", "i", "#2C9BFF", "#102641")
-        };
+            {
+                NotificationTone.Success => ("Concluído", "✓", "#36D17C", "#102B22"),
+                NotificationTone.Warning => ("Atenção", "!", "#F8C33A", "#332A12"),
+                NotificationTone.Error => ("Não foi possível concluir", "×", "#FF5D68", "#351A23"),
+                _ => ("Informação", "i", "#2C9BFF", "#102641")
+            };
 
         if (!_isNotificationVisible)
         {

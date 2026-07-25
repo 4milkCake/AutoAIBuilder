@@ -1,4 +1,5 @@
 using System.IO;
+using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Automation.Validation;
@@ -17,6 +18,7 @@ using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Diagnostics;
 using AutoAIBuilder.Infrastructure.Persistence;
@@ -85,6 +87,8 @@ public static class DesktopCompositionRoot
             new SqliteApplicationSettingsRepository(database));
         IAutomationAuditRepository automationAuditRepository =
             new SqliteAutomationAuditRepository(database);
+        IAutomationMaskCatalogRepository maskCatalogRepository =
+            new SqliteAutomationMaskCatalogRepository(database);
         var interruptedAutomations =
             automationAuditRepository.MarkIncompleteAsInterrupted(
                 DateTimeOffset.UtcNow,
@@ -95,7 +99,8 @@ public static class DesktopCompositionRoot
         var diagnosticService = new EnvironmentDiagnosticService(
             DiagnosticLogger,
             database,
-            automationAuditRepository);
+            automationAuditRepository,
+            maskCatalogRepository);
         IDataMaintenanceService dataMaintenanceService =
             new SqliteDataMaintenanceService(database);
         IOperationCoordinator operationCoordinator =
@@ -110,6 +115,11 @@ public static class DesktopCompositionRoot
                     automationAuditRepository,
                     [new VerifiedCopyPilotValidator()]),
                 automationAuditRepository);
+        IAutomationMaskCatalogService automationMaskCatalogService =
+            new AutomationMaskCatalogService(
+                maskCatalogRepository,
+                new AutomationContractJsonSerializer(),
+                new AutomationContractValidator());
         operationCoordinator.RecoverInterruptedOperations();
         if (interruptedAutomations > 0)
         {
@@ -142,7 +152,8 @@ public static class DesktopCompositionRoot
             new DialogService(),
             dataMaintenanceService,
             operationCoordinator,
-            verifiedCopyPilotService);
+            verifiedCopyPilotService,
+            automationMaskCatalogService);
     }
 
     private static void WriteMigrationDiagnostics(

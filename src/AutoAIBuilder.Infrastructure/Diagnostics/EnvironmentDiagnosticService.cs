@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Contracts;
 using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Diagnostics;
@@ -10,7 +11,8 @@ namespace AutoAIBuilder.Infrastructure.Diagnostics;
 public sealed class EnvironmentDiagnosticService(
     IDiagnosticLogger logger,
     SqliteDatabase database,
-    IAutomationAuditRepository automationAuditRepository) : IDiagnosticService
+    IAutomationAuditRepository automationAuditRepository,
+    IAutomationMaskCatalogRepository maskCatalogRepository) : IDiagnosticService
 {
     public DiagnosticSnapshot Capture()
     {
@@ -34,7 +36,9 @@ public sealed class EnvironmentDiagnosticService(
                 $"Processo {RuntimeInformation.ProcessArchitecture}; SO {RuntimeInformation.OSArchitecture}."),
             CreatePathCheck("Dados locais", AppStoragePaths.DataDirectory),
             CreateSqliteCheck(database),
-            CreateAutomationContractCheck(automationAuditRepository),
+            CreateAutomationContractCheck(
+                automationAuditRepository,
+                maskCatalogRepository),
             CreatePathCheck("Backups de segurança", AppStoragePaths.BackupDirectory),
             CreateDiagnosticLogCheck(logger),
             CreateLegacyJsonCheck("Projetos legados", AppStoragePaths.ProjectsFile),
@@ -49,7 +53,8 @@ public sealed class EnvironmentDiagnosticService(
     }
 
     private static DiagnosticCheck CreateAutomationContractCheck(
-        IAutomationAuditRepository repository)
+        IAutomationAuditRepository repository,
+        IAutomationMaskCatalogRepository maskCatalogRepository)
     {
         try
         {
@@ -58,6 +63,8 @@ public sealed class EnvironmentDiagnosticService(
                 entry => entry.Status is AutomationAuditStatus.Succeeded
                     or AutomationAuditStatus.Reused
                     or AutomationAuditStatus.Simulated);
+            var catalog = maskCatalogRepository.GetAll();
+            var active = catalog.Count(entry => entry.IsActive);
             return new DiagnosticCheck(
                 "Contratos seguros de automação",
                 $"Regras {AutomationContractVersions.RuleCatalogSchema}; "
@@ -66,7 +73,8 @@ public sealed class EnvironmentDiagnosticService(
                 "Planejamento, simulação, cópias isoladas, SHA-256, "
                 + "pós-validação, recuperação e idempotência disponíveis. "
                 + $"{recent.Count} auditoria(s), {completed} concluída(s). "
-                + "Nenhuma máscara real foi instalada nesta etapa.");
+                + $"{catalog.Count} versão(ões) no catálogo, {active} ativa(s). "
+                + "Máscaras catalogadas permanecem sem adaptador executável.");
         }
         catch (Exception exception) when (
             exception is IOException

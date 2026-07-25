@@ -20,6 +20,38 @@ public sealed class FilePickerService : IFilePickerService
             : [];
     }
 
+    public string? PickAutomationMaskContract()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar contrato JSON da máscara",
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".json",
+            Filter = "Contrato de máscara JSON|*.json"
+        };
+
+        return dialog.ShowDialog() == true
+            ? dialog.FileName
+            : null;
+    }
+
+    public string? PickAutomationRuleCatalog()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar catálogo JSON de regras",
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".json",
+            Filter = "Catálogo de regras JSON|*.json"
+        };
+
+        return dialog.ShowDialog() == true
+            ? dialog.FileName
+            : null;
+    }
+
     public string? PickAutomationOutputDirectory(string? currentDirectory)
     {
         var dialog = new OpenFolderDialog

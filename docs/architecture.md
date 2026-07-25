@@ -76,9 +76,21 @@ As automações futuras devem entrar pela interface
 `IAutomationOrchestrator`. A interface recebe um `AutomationRequest`, publica
 progresso e retorna `AutomationExecutionResult`.
 
-Nenhuma implementação foi registrada nesta etapa. Portanto, o shell não
-executa fluxos, CAD, máscaras ou agentes. A futura implementação poderá ficar
-na Infrastructure sem depender da janela WPF.
+O Marco 11.4 introduz uma fronteira anterior ao orquestrador. Catálogos de
+regras e máscaras usam contratos `1.0`; `AutomationContractValidator` rejeita
+esquemas desconhecidos, versões instáveis, identificadores, referências,
+extensões e caminhos inseguros. `AutomationPlanService` valida entradas,
+dependências e parâmetros, calcula SHA-256 e produz uma chave de idempotência.
+
+`AutomationExecutionService` não entrega caminhos originais ao adaptador. Ele
+cria cópias verificadas em uma área de staging, executa pré e pós-validadores,
+confirma outra vez os checksums dos originais e só então publica uma pasta
+exclusiva. Falhas e cancelamentos movem artefatos parciais para recuperação, sem
+excluir conteúdo. Uma execução equivalente já concluída é reutilizada.
+
+Nenhum adaptador real foi registrado nesta etapa. Portanto, o shell ainda não
+executa fluxos, CAD, máscaras ou agentes. Consulte
+[Contratos seguros de automação](automation-contracts.md).
 
 ## Diagnóstico e falhas
 
@@ -103,6 +115,11 @@ de esquema registrada por `PRAGMA user_version` e `SchemaMigrations`. Cada
 operação de escrita é transacional, as conexões usam WAL e possuem tempo de
 espera para contenção. O esquema 2 acrescenta `OperationExecutions`, que permite
 recuperar o estado operacional depois de uma falha ou encerramento.
+
+O esquema 3 acrescenta `AutomationAudits`, com contrato e versão da máscara,
+snapshots SHA-256, modo, estado, chave de idempotência, saídas e caminhos de
+publicação ou recuperação. Auditorias em andamento no encerramento são marcadas
+como interrompidas no próximo início, preservando qualquer artefato existente.
 
 Os JSON das versões anteriores são tratados como fontes legadas. A migração é
 idempotente, registra cada origem em `DataMigrations` e preserva os arquivos

@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using AutoAIBuilder.Application.Automation.Contracts;
+using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Infrastructure.Persistence;
 
@@ -7,7 +9,8 @@ namespace AutoAIBuilder.Infrastructure.Diagnostics;
 
 public sealed class EnvironmentDiagnosticService(
     IDiagnosticLogger logger,
-    SqliteDatabase database) : IDiagnosticService
+    SqliteDatabase database,
+    IAutomationAuditRepository automationAuditRepository) : IDiagnosticService
 {
     public DiagnosticSnapshot Capture()
     {
@@ -31,6 +34,7 @@ public sealed class EnvironmentDiagnosticService(
                 $"Processo {RuntimeInformation.ProcessArchitecture}; SO {RuntimeInformation.OSArchitecture}."),
             CreatePathCheck("Dados locais", AppStoragePaths.DataDirectory),
             CreateSqliteCheck(database),
+            CreateAutomationContractCheck(automationAuditRepository),
             CreatePathCheck("Backups de segurança", AppStoragePaths.BackupDirectory),
             CreateDiagnosticLogCheck(logger),
             CreateLegacyJsonCheck("Projetos legados", AppStoragePaths.ProjectsFile),
@@ -42,6 +46,40 @@ public sealed class EnvironmentDiagnosticService(
             DateTimeOffset.Now,
             checks,
             logger.GetRecent(100));
+    }
+
+    private static DiagnosticCheck CreateAutomationContractCheck(
+        IAutomationAuditRepository repository)
+    {
+        try
+        {
+            var recent = repository.GetRecent(500);
+            var completed = recent.Count(
+                entry => entry.Status is AutomationAuditStatus.Succeeded
+                    or AutomationAuditStatus.Reused
+                    or AutomationAuditStatus.Simulated);
+            return new DiagnosticCheck(
+                "Contratos seguros de automação",
+                $"Regras {AutomationContractVersions.RuleCatalogSchema}; "
+                + $"máscaras {AutomationContractVersions.MaskSchema}",
+                DiagnosticStatus.Healthy,
+                "Planejamento, simulação, cópias isoladas, SHA-256, "
+                + "pós-validação, recuperação e idempotência disponíveis. "
+                + $"{recent.Count} auditoria(s), {completed} concluída(s). "
+                + "Nenhuma máscara real foi instalada nesta etapa.");
+        }
+        catch (Exception exception) when (
+            exception is IOException
+                or UnauthorizedAccessException
+                or InvalidDataException
+                or InvalidOperationException)
+        {
+            return new DiagnosticCheck(
+                "Contratos seguros de automação",
+                "Auditoria indisponível",
+                DiagnosticStatus.Error,
+                $"Não foi possível consultar as auditorias: {exception.Message}");
+        }
     }
 
     private static DiagnosticCheck CreatePathCheck(string name, string path)

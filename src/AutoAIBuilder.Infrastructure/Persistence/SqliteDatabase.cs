@@ -4,7 +4,7 @@ namespace AutoAIBuilder.Infrastructure.Persistence;
 
 public sealed class SqliteDatabase
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
     private const int CommandTimeoutSeconds = 30;
 
     private readonly string _connectionString;
@@ -75,6 +75,12 @@ public sealed class SqliteDatabase
             if (version == 1)
             {
                 ApplyVersion2(connection);
+                version = ReadSchemaVersion(connection);
+            }
+
+            if (version == 2)
+            {
+                ApplyVersion3(connection);
                 version = ReadSchemaVersion(connection);
             }
 
@@ -281,6 +287,54 @@ public sealed class SqliteDatabase
                 'Estado persistente do motor de operações assíncronas');
 
             PRAGMA user_version = 2;
+            """;
+        command.Parameters.AddWithValue(
+            "$appliedAt",
+            DateTimeOffset.UtcNow.ToString("O"));
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static void ApplyVersion3(SqliteConnection connection)
+    {
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText =
+            """
+            CREATE TABLE AutomationAudits (
+                Id TEXT NOT NULL PRIMARY KEY,
+                PlanId TEXT NOT NULL,
+                ProjectId TEXT NOT NULL,
+                MaskId TEXT NOT NULL,
+                MaskVersion TEXT NOT NULL,
+                Mode INTEGER NOT NULL,
+                Status INTEGER NOT NULL,
+                IdempotencyKey TEXT NOT NULL,
+                InputsJson TEXT NOT NULL,
+                OutputsJson TEXT NOT NULL,
+                PublishedPath TEXT NULL,
+                RecoveryPath TEXT NULL,
+                Summary TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                CompletedAt TEXT NULL,
+                UpdatedAt TEXT NOT NULL
+            );
+
+            CREATE INDEX IX_AutomationAudits_CreatedAt
+                ON AutomationAudits (CreatedAt DESC);
+
+            CREATE INDEX IX_AutomationAudits_Idempotency
+                ON AutomationAudits (IdempotencyKey, Status, CompletedAt DESC);
+
+            INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+            VALUES (
+                3,
+                $appliedAt,
+                'Contratos seguros, simulações e auditoria das automações');
+
+            PRAGMA user_version = 3;
             """;
         command.Parameters.AddWithValue(
             "$appliedAt",

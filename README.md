@@ -38,10 +38,17 @@ no banco SQLite versionado
 `%LOCALAPPDATA%\AutoAIBuilder\Data\autoaibuilder.db`; arquivos são catalogados
 por metadados e permanecem em seus locais originais.
 
-O banco usa atualmente o esquema 2. Além dos dados funcionais, ele registra o
+O banco usa atualmente o esquema 3. Além dos dados funcionais, ele registra o
 estado das execuções operacionais, incluindo progresso, timeout, cancelamento,
 falha e conclusão. Execuções que estavam pendentes ou em andamento quando o
 processo foi encerrado são recuperadas como interrompidas no próximo início.
+
+O Marco 11.4 acrescenta contratos versionados para catálogos de regras e
+máscaras, pré e pós-validação, planejamento, simulação, execução exclusivamente
+sobre cópias, checksums SHA-256, recuperação preservada, auditoria e
+idempotência. Os contratos JSON estão em `schemas` e o ciclo completo está em
+[Contratos seguros de automação](docs/automation-contracts.md). Nenhuma máscara
+real foi importada ou habilitada nessa etapa.
 
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma

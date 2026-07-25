@@ -1,4 +1,5 @@
 using System.IO;
+using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -78,11 +79,19 @@ public static class DesktopCompositionRoot
         var workspaceService = new ProjectWorkspaceService(projectRepository);
         var settingsService = new ApplicationSettingsService(
             new SqliteApplicationSettingsRepository(database));
+        IAutomationAuditRepository automationAuditRepository =
+            new SqliteAutomationAuditRepository(database);
+        var interruptedAutomations =
+            automationAuditRepository.MarkIncompleteAsInterrupted(
+                DateTimeOffset.UtcNow,
+                "A execução foi interrompida pelo encerramento anterior do aplicativo; "
+                + "os artefatos existentes foram preservados.");
         var activityLogService = new ActivityLogService(
             new SqliteActivityLogRepository(database));
         var diagnosticService = new EnvironmentDiagnosticService(
             DiagnosticLogger,
-            database);
+            database,
+            automationAuditRepository);
         IDataMaintenanceService dataMaintenanceService =
             new SqliteDataMaintenanceService(database);
         IOperationCoordinator operationCoordinator =
@@ -90,6 +99,17 @@ public static class DesktopCompositionRoot
                 new SqliteOperationExecutionRepository(database),
                 DiagnosticLogger);
         operationCoordinator.RecoverInterruptedOperations();
+        if (interruptedAutomations > 0)
+        {
+            DiagnosticLogger.Write(
+                DiagnosticLevel.Warning,
+                "AutomationSafety",
+                "Auditorias incompletas foram marcadas como interrompidas.",
+                properties: new Dictionary<string, string>
+                {
+                    ["count"] = interruptedAutomations.ToString()
+                });
+        }
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),

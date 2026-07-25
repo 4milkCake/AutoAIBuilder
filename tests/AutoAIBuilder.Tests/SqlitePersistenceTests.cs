@@ -1,4 +1,5 @@
 using AutoAIBuilder.Application.History;
+using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Settings;
@@ -217,6 +218,61 @@ public sealed class SqlitePersistenceTests
             WHERE type = 'table' AND name = 'OperationExecutions';
             """;
         Assert.AreEqual(1L, tableCommand.ExecuteScalar());
+
+        using var auditCommand = verification.CreateCommand();
+        auditCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'AutomationAudits';
+            """;
+        Assert.AreEqual(1L, auditCommand.ExecuteScalar());
+    }
+
+    [TestMethod]
+    public void AutomationAuditRepository_RoundTripsAndRecoversRunningEntries()
+    {
+        var database = new SqliteDatabase(_databasePath);
+        var repository = new SqliteAutomationAuditRepository(database);
+        var now = DateTimeOffset.UtcNow;
+        var input = new AutomationInputSnapshot(
+            @"D:\entrada.dwg",
+            42,
+            now.AddMinutes(-1),
+            new string('A', 64));
+        var running = new AutomationAuditEntry(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "mascara-segura",
+            "1.0.0",
+            AutomationExecutionMode.Apply,
+            AutomationAuditStatus.Running,
+            new string('B', 64),
+            [input],
+            [],
+            null,
+            null,
+            "Em execução.",
+            now,
+            null);
+        repository.Save(running);
+
+        var loaded = repository.Get(running.Id);
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(running.Id, loaded.Id);
+        Assert.AreEqual(running.Status, loaded.Status);
+        Assert.AreEqual(running.IdempotencyKey, loaded.IdempotencyKey);
+        Assert.AreEqual(input, loaded.Inputs.Single());
+        Assert.AreEqual(0, loaded.OutputPaths.Count);
+        Assert.AreEqual(
+            1,
+            repository.MarkIncompleteAsInterrupted(
+                now.AddMinutes(1),
+                "Processo encerrado."));
+        Assert.AreEqual(
+            AutomationAuditStatus.Interrupted,
+            repository.Get(running.Id)?.Status);
     }
 
     [TestMethod]

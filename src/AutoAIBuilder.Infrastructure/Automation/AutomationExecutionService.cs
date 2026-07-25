@@ -442,7 +442,12 @@ public sealed class AutomationExecutionService : IAutomationExecutionService
             recoveryPath,
             summary,
             createdAt ?? _timeProvider.GetUtcNow(),
-            completedAt);
+            completedAt,
+            plan.RuleCatalogId,
+            plan.RuleCatalogVersion,
+            plan.ContractSha256,
+            plan.Adapter?.AdapterId,
+            plan.Adapter?.AdapterVersion);
 
     private static AutomationExecutionOutcome ToOutcome(
         AutomationAuditEntry audit,

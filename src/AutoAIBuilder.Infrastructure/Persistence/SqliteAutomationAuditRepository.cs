@@ -145,6 +145,11 @@ public sealed class SqliteAutomationAuditRepository(
                     Summary,
                     CreatedAt,
                     CompletedAt,
+                    RuleCatalogId,
+                    RuleCatalogVersion,
+                    ContractSha256,
+                    AdapterId,
+                    AdapterVersion,
                     UpdatedAt)
                 VALUES (
                     $id,
@@ -162,6 +167,11 @@ public sealed class SqliteAutomationAuditRepository(
                     $summary,
                     $createdAt,
                     $completedAt,
+                    $ruleCatalogId,
+                    $ruleCatalogVersion,
+                    $contractSha256,
+                    $adapterId,
+                    $adapterVersion,
                     $updatedAt)
                 ON CONFLICT(Id) DO UPDATE SET
                     PlanId = excluded.PlanId,
@@ -178,6 +188,11 @@ public sealed class SqliteAutomationAuditRepository(
                     Summary = excluded.Summary,
                     CreatedAt = excluded.CreatedAt,
                     CompletedAt = excluded.CompletedAt,
+                    RuleCatalogId = excluded.RuleCatalogId,
+                    RuleCatalogVersion = excluded.RuleCatalogVersion,
+                    ContractSha256 = excluded.ContractSha256,
+                    AdapterId = excluded.AdapterId,
+                    AdapterVersion = excluded.AdapterVersion,
                     UpdatedAt = excluded.UpdatedAt;
                 """;
             command.Parameters.AddWithValue("$id", entry.Id.ToString("D"));
@@ -211,6 +226,21 @@ public sealed class SqliteAutomationAuditRepository(
             command.Parameters.AddWithValue(
                 "$completedAt",
                 entry.CompletedAt?.ToString("O") ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$ruleCatalogId",
+                entry.RuleCatalogId ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$ruleCatalogVersion",
+                entry.RuleCatalogVersion ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$contractSha256",
+                entry.ContractSha256 ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$adapterId",
+                entry.AdapterId ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$adapterVersion",
+                entry.AdapterVersion ?? (object)DBNull.Value);
             command.Parameters.AddWithValue(
                 "$updatedAt",
                 DateTimeOffset.UtcNow.ToString("O"));
@@ -299,7 +329,12 @@ public sealed class SqliteAutomationAuditRepository(
                 ParseTimestamp(reader.GetString(13)),
                 reader.IsDBNull(14)
                     ? null
-                    : ParseTimestamp(reader.GetString(14)));
+                    : ParseTimestamp(reader.GetString(14)),
+                reader.IsDBNull(15) ? null : reader.GetString(15),
+                reader.IsDBNull(16) ? null : reader.GetString(16),
+                reader.IsDBNull(17) ? null : reader.GetString(17),
+                reader.IsDBNull(18) ? null : reader.GetString(18),
+                reader.IsDBNull(19) ? null : reader.GetString(19));
             Validate(entry);
             return entry;
         }
@@ -326,7 +361,13 @@ public sealed class SqliteAutomationAuditRepository(
             || string.IsNullOrWhiteSpace(entry.IdempotencyKey)
             || string.IsNullOrWhiteSpace(entry.Summary)
             || !Enum.IsDefined(entry.Mode)
-            || !Enum.IsDefined(entry.Status))
+            || !Enum.IsDefined(entry.Status)
+            || ((entry.RuleCatalogId is null)
+                != (entry.RuleCatalogVersion is null))
+            || (entry.ContractSha256 is not null
+                && !IsSha256(entry.ContractSha256))
+            || ((entry.AdapterId is null)
+                != (entry.AdapterVersion is null)))
         {
             throw new InvalidDataException(
                 "A auditoria contém campos obrigatórios inválidos.");
@@ -349,6 +390,23 @@ public sealed class SqliteAutomationAuditRepository(
             : throw new InvalidDataException(
                 "Uma data de auditoria persistida é inválida.");
 
+    private static bool IsSha256(string value)
+    {
+        if (value.Length != 64)
+        {
+            return false;
+        }
+
+        try
+        {
+            return Convert.FromHexString(value).Length == 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     private const string SelectColumns =
         """
         SELECT
@@ -366,7 +424,12 @@ public sealed class SqliteAutomationAuditRepository(
             RecoveryPath,
             Summary,
             CreatedAt,
-            CompletedAt
+            CompletedAt,
+            RuleCatalogId,
+            RuleCatalogVersion,
+            ContractSha256,
+            AdapterId,
+            AdapterVersion
         FROM AutomationAudits
         """;
 }

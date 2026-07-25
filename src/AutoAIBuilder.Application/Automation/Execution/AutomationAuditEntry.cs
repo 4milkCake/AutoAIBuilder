@@ -15,4 +15,9 @@ public sealed record AutomationAuditEntry(
     string? RecoveryPath,
     string Summary,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? CompletedAt);
+    DateTimeOffset? CompletedAt,
+    string? RuleCatalogId = null,
+    string? RuleCatalogVersion = null,
+    string? ContractSha256 = null,
+    string? AdapterId = null,
+    string? AdapterVersion = null);

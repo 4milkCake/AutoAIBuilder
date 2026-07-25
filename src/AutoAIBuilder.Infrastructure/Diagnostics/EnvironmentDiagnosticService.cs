@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using AutoAIBuilder.Application.Automation.Adapters;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Contracts;
 using AutoAIBuilder.Application.Automation.Execution;
+using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Infrastructure.Persistence;
 
@@ -12,7 +14,10 @@ public sealed class EnvironmentDiagnosticService(
     IDiagnosticLogger logger,
     SqliteDatabase database,
     IAutomationAuditRepository automationAuditRepository,
-    IAutomationMaskCatalogRepository maskCatalogRepository) : IDiagnosticService
+    IAutomationMaskCatalogRepository maskCatalogRepository,
+    IAutomationAdapterRegistry adapterRegistry,
+    IAutomationIntegrationAssessmentRepository assessmentRepository) :
+    IDiagnosticService
 {
     public DiagnosticSnapshot Capture()
     {
@@ -38,7 +43,9 @@ public sealed class EnvironmentDiagnosticService(
             CreateSqliteCheck(database),
             CreateAutomationContractCheck(
                 automationAuditRepository,
-                maskCatalogRepository),
+                maskCatalogRepository,
+                adapterRegistry,
+                assessmentRepository),
             CreatePathCheck("Backups de segurança", AppStoragePaths.BackupDirectory),
             CreateDiagnosticLogCheck(logger),
             CreateLegacyJsonCheck("Projetos legados", AppStoragePaths.ProjectsFile),
@@ -54,7 +61,9 @@ public sealed class EnvironmentDiagnosticService(
 
     private static DiagnosticCheck CreateAutomationContractCheck(
         IAutomationAuditRepository repository,
-        IAutomationMaskCatalogRepository maskCatalogRepository)
+        IAutomationMaskCatalogRepository maskCatalogRepository,
+        IAutomationAdapterRegistry adapterRegistry,
+        IAutomationIntegrationAssessmentRepository assessmentRepository)
     {
         try
         {
@@ -65,6 +74,12 @@ public sealed class EnvironmentDiagnosticService(
                     or AutomationAuditStatus.Simulated);
             var catalog = maskCatalogRepository.GetAll();
             var active = catalog.Count(entry => entry.IsActive);
+            var adapters = adapterRegistry.GetAll();
+            var enabledAdapters = adapters.Count(adapter => adapter.IsEnabled);
+            var catalogEnabled = adapters.Count(
+                adapter => adapter.IsEnabled
+                           && adapter.CatalogExecutionEnabled);
+            var assessments = assessmentRepository.GetRecent(500);
             return new DiagnosticCheck(
                 "Contratos seguros de automação",
                 $"Regras {AutomationContractVersions.RuleCatalogSchema}; "
@@ -74,7 +89,11 @@ public sealed class EnvironmentDiagnosticService(
                 + "pós-validação, recuperação e idempotência disponíveis. "
                 + $"{recent.Count} auditoria(s), {completed} concluída(s). "
                 + $"{catalog.Count} versão(ões) no catálogo, {active} ativa(s). "
-                + "Máscaras catalogadas permanecem sem adaptador executável.");
+                + $"{adapters.Count} adaptador(es) interno(s), "
+                + $"{enabledAdapters} habilitado(s), {catalogEnabled} "
+                + "autorizado(s) para catálogo. "
+                + $"{assessments.Count} avaliação(ões) de integração. "
+                + "Carregamento dinâmico permanece indisponível.");
         }
         catch (Exception exception) when (
             exception is IOException

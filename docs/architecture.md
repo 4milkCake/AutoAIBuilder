@@ -104,6 +104,17 @@ lado a lado e garante no banco que apenas uma versão de cada identidade possa
 estar ativa. Ativação não significa execução e nenhum adaptador é resolvido
 pelo catálogo.
 
+O Marco 11.6B adiciona `AutomationAdapterRegistry` e
+`SafeAutomationOrchestrator`. O registro recebe somente instâncias internas
+fornecidas pela composição e resolve um adaptador por identidade, versão e
+SHA-256 exatos. O orquestrador recalcula o fingerprint do plano, associa a
+idempotência à versão do adaptador e centraliza a entrega ao motor isolado.
+
+O piloto de cópia verificada já passa por essa fronteira. Para máscaras
+catalogadas, o orquestrador apenas revalida e audita a prontidão; a entrada de
+execução permanece bloqueada por política. Não existe carregamento por DLL,
+reflexão, script ou processo externo.
+
 Máscaras gráficas, adaptadores CAD e agentes continuam desconectados.
 
 ## Diagnóstico e falhas
@@ -139,6 +150,11 @@ O esquema 4 acrescenta `AutomationMaskCatalog`, com os contratos normalizados,
 identidade e versão da máscara e das regras, SHA-256, origem resumida e estado
 ativo ou inativo. A migração é aditiva e não altera projetos nem auditorias
 existentes.
+
+O esquema 5 amplia `AutomationAudits` com catálogo de regras, fingerprint do
+contrato e identidade do adaptador resolvido. Ele também acrescenta
+`AutomationIntegrationAssessments`, com as decisões fail-closed de prontidão
+por projeto e versão catalogada.
 
 Os JSON das versões anteriores são tratados como fontes legadas. A migração é
 idempotente, registra cada origem em `DataMigrations` e preserva os arquivos

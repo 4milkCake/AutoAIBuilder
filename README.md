@@ -38,7 +38,7 @@ no banco SQLite versionado
 `%LOCALAPPDATA%\AutoAIBuilder\Data\autoaibuilder.db`; arquivos são catalogados
 por metadados e permanecem em seus locais originais.
 
-O banco usa atualmente o esquema 3. Além dos dados funcionais, ele registra o
+O banco usa atualmente o esquema 5. Além dos dados funcionais, ele registra o
 estado das execuções operacionais, incluindo progresso, timeout, cancelamento,
 falha e conclusão. Execuções que estavam pendentes ou em andamento quando o
 processo foi encerrado são recuperadas como interrompidas no próximo início.
@@ -64,6 +64,14 @@ Conflitos de conteúdo nunca sobrescrevem a mesma versão, e somente uma versão
 por identificador pode ser marcada para integração futura. Importar ou ativar
 não carrega código nem executa automações. Consulte
 [Marco 11.6A — Catálogo seguro de máscaras](docs/mask-catalog.md).
+
+O Marco 11.6B introduz um registro interno e imutável de adaptadores. A
+resolução exige identidade, versão e SHA-256 exatos; não existe descoberta de
+DLLs, scripts ou executáveis. O piloto de cópia verificada passa pelo novo
+orquestrador, e sua versão fica registrada nas auditorias. Máscaras catalogadas
+podem ser revalidadas e ter a prontidão auditada, mas a execução continua
+bloqueada. Consulte
+[Marco 11.6B — Registro seguro de adaptadores](docs/adapter-registry.md).
 
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma
@@ -134,7 +142,8 @@ corrompidas são ignoradas na leitura sem impedir a inicialização. O arquivo a
 anteriores, eventos excessivamente grandes são reduzidos e valores com nomes de
 credenciais, senhas, tokens ou chaves são removidos antes da gravação.
 
-Leitura e edição CAD, aplicação visual das máscaras definitivas, adaptadores
-dessas máscaras e integrações reais de IA ainda não foram implementadas. O
-piloto 11.5 não interpreta o conteúdo técnico dos arquivos, e o catálogo 11.6A
-armazena somente contratos declarativos.
+Leitura e edição CAD, aplicação visual das máscaras definitivas, adaptadores CAD
+e integrações reais de IA ainda não foram implementadas. O piloto 11.5 não
+interpreta o conteúdo técnico dos arquivos; o catálogo 11.6A armazena contratos
+declarativos, e o registro 11.6B somente comprova a ligação com componentes
+internos homologados.

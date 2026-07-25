@@ -1,3 +1,7 @@
+using AutoAIBuilder.Application.Automation;
+using AutoAIBuilder.Application.Automation.Adapters;
+using AutoAIBuilder.Application.Automation.Catalog;
+using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Application.History;
@@ -13,6 +17,7 @@ using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Adapters;
 using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Persistence;
@@ -176,6 +181,19 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.AreEqual("ATIVA PARA INTEGRAÇÃO", viewModel.MaskCatalogStage);
         Assert.AreEqual(1, viewModel.ActiveMaskCount);
         Assert.IsTrue(viewModel.MaskCatalogEntries.Single().IsActive);
+        Assert.AreEqual(1, viewModel.RegisteredAdapterCount);
+        Assert.AreEqual(
+            "SEM ADAPTADOR REGISTRADO",
+            viewModel.MaskCatalogEntries.Single().IntegrationStatus);
+
+        viewModel.AssessMaskIntegrationCommand.Execute(
+            viewModel.MaskCatalogEntries.Single());
+
+        Assert.AreEqual("SEM ADAPTADOR", viewModel.MaskCatalogStage);
+        Assert.AreEqual(1, viewModel.IntegrationAssessments.Count);
+        Assert.AreEqual(
+            "SEM ADAPTADOR",
+            viewModel.IntegrationAssessments.Single().Status);
         Assert.AreEqual(
             serializer.Serialize(AutomationTestData.CreateMask()),
             File.ReadAllText(maskPath));
@@ -252,16 +270,34 @@ public sealed class MainWindowViewModelIntegrationTests
             logger);
         var automationAuditRepository =
             new SqliteAutomationAuditRepository(operationDatabase);
+        var serializer = new AutomationContractJsonSerializer();
+        var validator = new AutomationContractValidator();
+        IAutomationMaskCatalogRepository maskCatalogRepository =
+            new SqliteAutomationMaskCatalogRepository(operationDatabase);
+        IAutomationIntegrationAssessmentRepository assessmentRepository =
+            new SqliteAutomationIntegrationAssessmentRepository(
+                operationDatabase);
+        IAutomationAdapterRegistry adapterRegistry =
+            new AutomationAdapterRegistry(
+                [new VerifiedCopyAutomationAdapter(serializer)]);
+        IAutomationOrchestrator automationOrchestrator =
+            new SafeAutomationOrchestrator(
+                maskCatalogRepository,
+                adapterRegistry,
+                assessmentRepository,
+                new AutomationExecutionService(
+                    automationAuditRepository,
+                    [new VerifiedCopyPilotValidator()]),
+                serializer,
+                validator);
         var verifiedCopyPilot = new VerifiedCopyPilotService(
-            new AutomationPlanService(new AutomationContractValidator()),
-            new AutomationExecutionService(
-                automationAuditRepository,
-                [new VerifiedCopyPilotValidator()]),
+            new AutomationPlanService(validator),
+            automationOrchestrator,
             automationAuditRepository);
         var maskCatalogService = new AutomationMaskCatalogService(
-            new SqliteAutomationMaskCatalogRepository(operationDatabase),
-            new AutomationContractJsonSerializer(),
-            new AutomationContractValidator());
+            maskCatalogRepository,
+            serializer,
+            validator);
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -282,7 +318,8 @@ public sealed class MainWindowViewModelIntegrationTests
             dataMaintenanceService ?? new StubDataMaintenanceService(_directory),
             operationCoordinator,
             verifiedCopyPilot,
-            maskCatalogService);
+            maskCatalogService,
+            automationOrchestrator);
     }
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Contracts;
 using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Automation.Validation;
@@ -74,6 +75,10 @@ public sealed class AutomationPlanService(
             inputs,
             outputRoot,
             parameters);
+        var serializer = new AutomationContractJsonSerializer();
+        var contractSha256 = AutomationMaskPackageFingerprint.Compute(
+            serializer.Serialize(request.Mask),
+            serializer.Serialize(request.RuleCatalog));
 
         return new AutomationExecutionPlan(
             Guid.NewGuid(),
@@ -86,7 +91,11 @@ public sealed class AutomationPlanService(
             CreateActions(mode, request.Mask),
             issues,
             idempotencyKey,
-            _timeProvider.GetUtcNow());
+            _timeProvider.GetUtcNow(),
+            request.RuleCatalog.CatalogId,
+            request.RuleCatalog.Version,
+            contractSha256,
+            RuleCatalog: request.RuleCatalog);
     }
 
     private static void ValidateApplicationVersion(

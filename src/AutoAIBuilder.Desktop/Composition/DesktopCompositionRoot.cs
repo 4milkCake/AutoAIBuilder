@@ -1,6 +1,9 @@
 using System.IO;
+using AutoAIBuilder.Application.Automation;
+using AutoAIBuilder.Application.Automation.Adapters;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Execution;
+using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Application.Dashboard;
@@ -18,6 +21,7 @@ using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Adapters;
 using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Diagnostics;
@@ -89,6 +93,25 @@ public static class DesktopCompositionRoot
             new SqliteAutomationAuditRepository(database);
         IAutomationMaskCatalogRepository maskCatalogRepository =
             new SqliteAutomationMaskCatalogRepository(database);
+        IAutomationIntegrationAssessmentRepository assessmentRepository =
+            new SqliteAutomationIntegrationAssessmentRepository(database);
+        var contractSerializer = new AutomationContractJsonSerializer();
+        var contractValidator = new AutomationContractValidator();
+        IAutomationAdapterRegistry adapterRegistry =
+            new AutomationAdapterRegistry(
+                [new VerifiedCopyAutomationAdapter(contractSerializer)]);
+        IAutomationExecutionService automationExecutionService =
+            new AutomationExecutionService(
+                automationAuditRepository,
+                [new VerifiedCopyPilotValidator()]);
+        IAutomationOrchestrator automationOrchestrator =
+            new SafeAutomationOrchestrator(
+                maskCatalogRepository,
+                adapterRegistry,
+                assessmentRepository,
+                automationExecutionService,
+                contractSerializer,
+                contractValidator);
         var interruptedAutomations =
             automationAuditRepository.MarkIncompleteAsInterrupted(
                 DateTimeOffset.UtcNow,
@@ -100,7 +123,9 @@ public static class DesktopCompositionRoot
             DiagnosticLogger,
             database,
             automationAuditRepository,
-            maskCatalogRepository);
+            maskCatalogRepository,
+            adapterRegistry,
+            assessmentRepository);
         IDataMaintenanceService dataMaintenanceService =
             new SqliteDataMaintenanceService(database);
         IOperationCoordinator operationCoordinator =
@@ -109,17 +134,14 @@ public static class DesktopCompositionRoot
                 DiagnosticLogger);
         IVerifiedCopyPilotService verifiedCopyPilotService =
             new VerifiedCopyPilotService(
-                new AutomationPlanService(
-                    new AutomationContractValidator()),
-                new AutomationExecutionService(
-                    automationAuditRepository,
-                    [new VerifiedCopyPilotValidator()]),
+                new AutomationPlanService(contractValidator),
+                automationOrchestrator,
                 automationAuditRepository);
         IAutomationMaskCatalogService automationMaskCatalogService =
             new AutomationMaskCatalogService(
                 maskCatalogRepository,
-                new AutomationContractJsonSerializer(),
-                new AutomationContractValidator());
+                contractSerializer,
+                contractValidator);
         operationCoordinator.RecoverInterruptedOperations();
         if (interruptedAutomations > 0)
         {
@@ -153,7 +175,8 @@ public static class DesktopCompositionRoot
             dataMaintenanceService,
             operationCoordinator,
             verifiedCopyPilotService,
-            automationMaskCatalogService);
+            automationMaskCatalogService,
+            automationOrchestrator);
     }
 
     private static void WriteMigrationDiagnostics(

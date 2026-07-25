@@ -4,7 +4,7 @@ namespace AutoAIBuilder.Infrastructure.Persistence;
 
 public sealed class SqliteDatabase
 {
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
     private const int CommandTimeoutSeconds = 30;
 
     private readonly string _connectionString;
@@ -87,6 +87,12 @@ public sealed class SqliteDatabase
             if (version == 3)
             {
                 ApplyVersion4(connection);
+                version = ReadSchemaVersion(connection);
+            }
+
+            if (version == 4)
+            {
+                ApplyVersion5(connection);
                 version = ReadSchemaVersion(connection);
             }
 
@@ -403,6 +409,69 @@ public sealed class SqliteDatabase
                 'Catálogo seguro e versionado de máscaras de automação');
 
             PRAGMA user_version = 4;
+            """;
+        command.Parameters.AddWithValue(
+            "$appliedAt",
+            DateTimeOffset.UtcNow.ToString("O"));
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static void ApplyVersion5(SqliteConnection connection)
+    {
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText =
+            """
+            ALTER TABLE AutomationAudits
+                ADD COLUMN RuleCatalogId TEXT NULL;
+
+            ALTER TABLE AutomationAudits
+                ADD COLUMN RuleCatalogVersion TEXT NULL;
+
+            ALTER TABLE AutomationAudits
+                ADD COLUMN ContractSha256 TEXT NULL;
+
+            ALTER TABLE AutomationAudits
+                ADD COLUMN AdapterId TEXT NULL;
+
+            ALTER TABLE AutomationAudits
+                ADD COLUMN AdapterVersion TEXT NULL;
+
+            CREATE TABLE AutomationIntegrationAssessments (
+                Id TEXT NOT NULL PRIMARY KEY,
+                ProjectId TEXT NOT NULL,
+                CatalogEntryId TEXT NOT NULL,
+                MaskId TEXT NOT NULL,
+                MaskVersion TEXT NOT NULL,
+                ContractSha256 TEXT NOT NULL,
+                Status INTEGER NOT NULL,
+                AdapterId TEXT NULL,
+                AdapterVersion TEXT NULL,
+                Summary TEXT NOT NULL,
+                EvaluatedAt TEXT NOT NULL,
+                FOREIGN KEY (CatalogEntryId)
+                    REFERENCES AutomationMaskCatalog (Id)
+            );
+
+            CREATE INDEX IX_AutomationIntegrationAssessments_EvaluatedAt
+                ON AutomationIntegrationAssessments (EvaluatedAt DESC);
+
+            CREATE INDEX IX_AutomationIntegrationAssessments_Mask
+                ON AutomationIntegrationAssessments (
+                    MaskId,
+                    MaskVersion,
+                    EvaluatedAt DESC);
+
+            INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+            VALUES (
+                5,
+                $appliedAt,
+                'Registro interno de adaptadores e auditoria da prontidão de integração');
+
+            PRAGMA user_version = 5;
             """;
         command.Parameters.AddWithValue(
             "$appliedAt",

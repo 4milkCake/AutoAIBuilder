@@ -40,14 +40,14 @@ public sealed partial class MainWindowViewModel
             }),
         new WorkspaceModule(
             WorkspaceSection.Masks,
-            () => "Catálogo seguro carregado; nenhuma máscara importada é "
-                  + "executável nesta etapa.",
+            () => "Registro interno carregado; máscaras catalogadas continuam "
+                  + "sem execução no Marco 11.6B.",
             activate: RefreshMaskCatalog,
             refresh: () =>
             {
                 RefreshMaskCatalog();
                 StatusMessage =
-                    "Catálogo de máscaras atualizado a partir do banco local.";
+                    "Catálogo, adaptadores internos e avaliações atualizados.";
             }),
         new WorkspaceModule(
             WorkspaceSection.Automation,

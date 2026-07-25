@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using AutoAIBuilder.Application.Automation.Adapters;
 using AutoAIBuilder.Application.Automation.Catalog;
+using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -37,6 +39,14 @@ public sealed partial class MainWindowViewModel
         MaskImportIssues
     { get; } = [];
 
+    public ObservableCollection<AutomationAdapterItemViewModel>
+        RegisteredAutomationAdapters
+    { get; } = [];
+
+    public ObservableCollection<AutomationIntegrationAssessmentItemViewModel>
+        IntegrationAssessments
+    { get; } = [];
+
     public ICommand ChooseMaskContractCommand { get; }
 
     public ICommand ChooseRuleCatalogCommand { get; }
@@ -48,6 +58,8 @@ public sealed partial class MainWindowViewModel
     public ICommand ClearMaskPackageCommand { get; }
 
     public ICommand ToggleMaskCatalogEntryCommand { get; }
+
+    public ICommand AssessMaskIntegrationCommand { get; }
 
     public string MaskContractPath
     {
@@ -171,9 +183,23 @@ public sealed partial class MainWindowViewModel
     public int ActiveMaskCount =>
         MaskCatalogEntries.Count(entry => entry.IsActive);
 
+    public int RegisteredAdapterCount =>
+        RegisteredAutomationAdapters.Count;
+
     public string MaskCatalogCountSummary =>
         $"{ImportedMaskCount} versão(ões) catalogada(s) • "
-        + $"{ActiveMaskCount} ativa(s) para integração futura";
+        + $"{ActiveMaskCount} ativa(s) • "
+        + $"{RegisteredAdapterCount} adaptador(es) interno(s)";
+
+    public string AdapterRegistrySummary =>
+        $"{RegisteredAdapterCount} adaptador(es) compilado(s) com o aplicativo; "
+        + "nenhum carregamento dinâmico permitido";
+
+    public string IntegrationAuditSummary =>
+        IntegrationAssessments.Count == 0
+            ? "Nenhuma avaliação de integração registrada."
+            : $"{IntegrationAssessments.Count} avaliação(ões) recente(s); "
+              + "todas sem execução de máscara catalogada.";
 
     public Visibility MaskPreviewVisibility =>
         _maskPackagePreview is null
@@ -277,8 +303,8 @@ public sealed partial class MainWindowViewModel
             MaskCatalogStage = "IMPORTADA — INATIVA";
             MaskCatalogStageAccent = "#36D17C";
             MaskCatalogSummary =
-                "Contrato armazenado no catálogo local. Nenhum adaptador foi "
-                + "associado e nenhuma automação foi executada.";
+                "Contrato armazenado no catálogo local. O registro interno só "
+                + "aceitará identidade, versão e SHA-256 exatos; nada foi executado.";
             RefreshMaskCatalog();
             TryRecordActivity(
                 "Máscaras",
@@ -327,7 +353,7 @@ public sealed partial class MainWindowViewModel
                 activate);
             RefreshMaskCatalog();
             MaskCatalogSummary = activate
-                ? "Versão ativada somente para integração futura. Nenhuma "
+                ? "Versão ativada para avaliação de integração. Nenhuma "
                   + "automação foi executada."
                 : "Versão desativada e preservada no catálogo.";
             MaskCatalogStage = activate
@@ -337,7 +363,8 @@ public sealed partial class MainWindowViewModel
             TryRecordActivity(
                 "Máscaras",
                 activate ? "Máscara ativada" : "Máscara desativada",
-                $"“{updated.MaskName}” {updated.MaskVersion}; nenhuma execução.",
+                $"“{updated.MaskName}” {updated.MaskVersion}; nenhuma execução. "
+                + "A resolução exige hash homologado.",
                 ActivityLevel.Information,
                 SelectedProject);
             StatusMessage = activate
@@ -356,19 +383,81 @@ public sealed partial class MainWindowViewModel
     {
         try
         {
+            var adapters = _automationOrchestrator.GetRegisteredAdapters();
+            ReplaceItems(
+                RegisteredAutomationAdapters,
+                adapters.Select(AutomationAdapterItemViewModel.From));
             ReplaceItems(
                 MaskCatalogEntries,
                 _automationMaskCatalogService.GetAll().Select(
-                    AutomationMaskCatalogItemViewModel.From));
+                    entry => AutomationMaskCatalogItemViewModel.From(
+                        entry,
+                        adapters)));
+            ReplaceItems(
+                IntegrationAssessments,
+                _automationOrchestrator.GetRecentAssessments(20).Select(
+                    AutomationIntegrationAssessmentItemViewModel.From));
             OnPropertyChanged(nameof(ImportedMaskCount));
             OnPropertyChanged(nameof(ActiveMaskCount));
+            OnPropertyChanged(nameof(RegisteredAdapterCount));
             OnPropertyChanged(nameof(MaskCatalogCountSummary));
+            OnPropertyChanged(nameof(AdapterRegistrySummary));
+            OnPropertyChanged(nameof(IntegrationAuditSummary));
             OnPropertyChanged(nameof(EmptyMaskCatalogVisibility));
             RaiseMaskCatalogCommandStates();
         }
         catch (Exception exception) when (
             exception is InvalidDataException
                 or InvalidOperationException)
+        {
+            ReportMaskCatalogFailure(exception);
+        }
+    }
+
+    private void AssessMaskIntegration(
+        AutomationMaskCatalogItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        if (SelectedProject is null)
+        {
+            MaskCatalogStage = "AVALIAÇÃO BLOQUEADA";
+            MaskCatalogStageAccent = "#F8C33A";
+            MaskCatalogSummary =
+                "Selecione um projeto ativo para registrar a avaliação.";
+            return;
+        }
+
+        try
+        {
+            var assessment = _automationOrchestrator.AssessIntegration(
+                SelectedProject.Id,
+                item.Id);
+            RefreshMaskCatalog();
+            MaskCatalogStage = GetAssessmentLabel(assessment.Status);
+            MaskCatalogStageAccent =
+                GetAssessmentAccent(assessment.Status);
+            MaskCatalogSummary = assessment.Summary
+                + " Nenhum adaptador foi invocado.";
+            TryRecordActivity(
+                "Máscaras",
+                "Integração avaliada",
+                $"{item.Identity}: {MaskCatalogStage}. "
+                + "Nenhum arquivo foi criado.",
+                assessment.IsReady
+                    ? ActivityLevel.Success
+                    : ActivityLevel.Information,
+                SelectedProject);
+            StatusMessage =
+                $"Integração de “{item.Name}” avaliada sem execução.";
+        }
+        catch (Exception exception) when (
+            exception is InvalidDataException
+                or InvalidOperationException
+                or ArgumentException)
         {
             ReportMaskCatalogFailure(exception);
         }
@@ -502,6 +591,9 @@ public sealed partial class MainWindowViewModel
         (ToggleMaskCatalogEntryCommand
             as RelayCommand<AutomationMaskCatalogItemViewModel>)?
             .RaiseCanExecuteChanged();
+        (AssessMaskIntegrationCommand
+            as RelayCommand<AutomationMaskCatalogItemViewModel>)?
+            .RaiseCanExecuteChanged();
     }
 
     private void ReportMaskCatalogFailure(Exception exception)
@@ -518,6 +610,34 @@ public sealed partial class MainWindowViewModel
             "Falha isolada no catálogo de máscaras.",
             exception);
     }
+
+    private static string GetAssessmentLabel(
+        AutomationIntegrationStatus status) =>
+        status switch
+        {
+            AutomationIntegrationStatus.Ready => "INTEGRAÇÃO HOMOLOGADA",
+            AutomationIntegrationStatus.InactiveMask => "MÁSCARA INATIVA",
+            AutomationIntegrationStatus.InvalidCatalogContract =>
+                "SNAPSHOT INVÁLIDO",
+            AutomationIntegrationStatus.AdapterNotRegistered =>
+                "SEM ADAPTADOR",
+            AutomationIntegrationStatus.ContractMismatch =>
+                "HASH NÃO HOMOLOGADO",
+            AutomationIntegrationStatus.AdapterDisabled =>
+                "ADAPTADOR DESABILITADO",
+            _ => "EXECUÇÃO DE CATÁLOGO BLOQUEADA"
+        };
+
+    private static string GetAssessmentAccent(
+        AutomationIntegrationStatus status) =>
+        status switch
+        {
+            AutomationIntegrationStatus.Ready => "#36D17C",
+            AutomationIntegrationStatus.InvalidCatalogContract
+                or AutomationIntegrationStatus.ContractMismatch => "#FF5D68",
+            AutomationIntegrationStatus.InactiveMask => "#627087",
+            _ => "#F8C33A"
+        };
 }
 
 public sealed record AutomationMaskCatalogItemViewModel(
@@ -536,11 +656,34 @@ public sealed record AutomationMaskCatalogItemViewModel(
     bool IsActive,
     string Status,
     string StatusAccent,
-    string ToggleAction)
+    string ToggleAction,
+    string IntegrationStatus,
+    string IntegrationAccent,
+    string IntegrationDetail)
 {
     public static AutomationMaskCatalogItemViewModel From(
-        AutomationMaskCatalogEntry entry) =>
-        new(
+        AutomationMaskCatalogEntry entry,
+        IReadOnlyList<AutomationAdapterDescriptor> adapters)
+    {
+        var candidates = adapters.Where(
+                adapter =>
+                    string.Equals(
+                        adapter.MaskId,
+                        entry.MaskId,
+                        StringComparison.Ordinal)
+                    && string.Equals(
+                        adapter.MaskVersion,
+                        entry.MaskVersion,
+                        StringComparison.Ordinal))
+            .ToArray();
+        var exact = candidates.FirstOrDefault(
+            adapter => string.Equals(
+                adapter.ContractSha256,
+                entry.ContentSha256,
+                StringComparison.OrdinalIgnoreCase));
+        var integration = GetIntegrationDisplay(entry, candidates, exact);
+
+        return new AutomationMaskCatalogItemViewModel(
             entry.Id,
             entry.MaskName,
             entry.MaskVersion,
@@ -561,5 +704,138 @@ public sealed record AutomationMaskCatalogItemViewModel(
                 ? "ATIVA PARA INTEGRAÇÃO"
                 : "INATIVA — SEM EXECUÇÃO",
             entry.IsActive ? "#36D17C" : "#627087",
-            entry.IsActive ? "Desativar versão" : "Ativar para integração");
+            entry.IsActive ? "Desativar versão" : "Ativar para integração",
+            integration.Status,
+            integration.Accent,
+            integration.Detail);
+    }
+
+    private static (string Status, string Accent, string Detail)
+        GetIntegrationDisplay(
+            AutomationMaskCatalogEntry entry,
+            IReadOnlyList<AutomationAdapterDescriptor> candidates,
+            AutomationAdapterDescriptor? exact)
+    {
+        if (!entry.IsActive)
+        {
+            return (
+                "INATIVA — NÃO RESOLVIDA",
+                "#627087",
+                "Ative a versão antes de avaliar sua integração.");
+        }
+
+        if (candidates.Count == 0)
+        {
+            return (
+                "SEM ADAPTADOR REGISTRADO",
+                "#F8C33A",
+                "Nenhum componente interno reivindica esta identidade.");
+        }
+
+        if (exact is null)
+        {
+            return (
+                "CONTRATO NÃO HOMOLOGADO",
+                "#FF5D68",
+                "A identidade coincide, mas o SHA-256 difere do contrato "
+                + "compilado no adaptador.");
+        }
+
+        if (!exact.IsEnabled)
+        {
+            return (
+                "ADAPTADOR DESABILITADO",
+                "#F8C33A",
+                $"{exact.AdapterId}@{exact.AdapterVersion}");
+        }
+
+        return exact.CatalogExecutionEnabled
+            ? (
+                "PRONTA PARA AVALIAÇÃO",
+                "#36D17C",
+                $"{exact.AdapterId}@{exact.AdapterVersion}")
+            : (
+                "CORRESPONDÊNCIA BLOQUEADA",
+                "#F8C33A",
+                $"{exact.AdapterId}@{exact.AdapterVersion}; a política não "
+                + "autoriza execução de catálogo.");
+    }
+}
+
+public sealed record AutomationAdapterItemViewModel(
+    string Name,
+    string Identity,
+    string Target,
+    string Provider,
+    string Capabilities,
+    string Policy,
+    string Status,
+    string StatusAccent,
+    string ContractSha256)
+{
+    public static AutomationAdapterItemViewModel From(
+        AutomationAdapterDescriptor descriptor) =>
+        new(
+            descriptor.DisplayName,
+            $"{descriptor.AdapterId}@{descriptor.AdapterVersion}",
+            $"{descriptor.MaskId}@{descriptor.MaskVersion}",
+            descriptor.Provider,
+            $"{(descriptor.SupportsSimulation ? "Simulação" : "Sem simulação")} • "
+            + $"{(descriptor.SupportsApply ? "Aplicação" : "Sem aplicação")}",
+            descriptor.CatalogExecutionEnabled
+                ? "Catálogo autorizado por política"
+                : "Somente fluxo interno homologado",
+            descriptor.IsEnabled ? "REGISTRADO" : "DESABILITADO",
+            descriptor.IsEnabled ? "#36D17C" : "#F8C33A",
+            descriptor.ContractSha256);
+}
+
+public sealed record AutomationIntegrationAssessmentItemViewModel(
+    string Identity,
+    string Status,
+    string StatusAccent,
+    string Adapter,
+    string Summary,
+    string EvaluatedAt)
+{
+    public static AutomationIntegrationAssessmentItemViewModel From(
+        AutomationIntegrationAssessment assessment) =>
+        new(
+            $"{assessment.MaskId}@{assessment.MaskVersion}",
+            GetAssessmentLabel(assessment.Status),
+            GetAssessmentAccent(assessment.Status),
+            assessment.AdapterId is null
+                ? "Nenhum adaptador"
+                : $"{assessment.AdapterId}@{assessment.AdapterVersion}",
+            assessment.Summary,
+            assessment.EvaluatedAt.ToLocalTime()
+                .ToString("dd/MM/yyyy HH:mm:ss"));
+
+    private static string GetAssessmentLabel(
+        AutomationIntegrationStatus status) =>
+        status switch
+        {
+            AutomationIntegrationStatus.Ready => "PRONTA",
+            AutomationIntegrationStatus.InactiveMask => "INATIVA",
+            AutomationIntegrationStatus.InvalidCatalogContract =>
+                "SNAPSHOT INVÁLIDO",
+            AutomationIntegrationStatus.AdapterNotRegistered =>
+                "SEM ADAPTADOR",
+            AutomationIntegrationStatus.ContractMismatch =>
+                "HASH DIVERGENTE",
+            AutomationIntegrationStatus.AdapterDisabled =>
+                "DESABILITADO",
+            _ => "POLÍTICA BLOQUEADA"
+        };
+
+    private static string GetAssessmentAccent(
+        AutomationIntegrationStatus status) =>
+        status switch
+        {
+            AutomationIntegrationStatus.Ready => "#36D17C",
+            AutomationIntegrationStatus.InvalidCatalogContract
+                or AutomationIntegrationStatus.ContractMismatch => "#FF5D68",
+            AutomationIntegrationStatus.InactiveMask => "#627087",
+            _ => "#F8C33A"
+        };
 }

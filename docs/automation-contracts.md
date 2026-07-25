@@ -104,3 +104,18 @@ para integração futura.
 
 O catálogo não carrega adaptadores, scripts, DLLs, macros ou executáveis. Os
 detalhes estão em [Catálogo seguro de máscaras](mask-catalog.md).
+
+## Marco 11.6B
+
+Adaptadores passam a ser resolvidos exclusivamente pelo registro interno. A
+resolução exige `maskId`, `maskVersion` e SHA-256 normalizado exatos; não existe
+carregamento dinâmico por arquivo, assembly, reflexão ou processo.
+
+O piloto 11.5 também passa por essa fronteira. Antes de entregar o adaptador ao
+motor isolado, o orquestrador revalida o snapshot completo do plano e vincula a
+idempotência à versão do adaptador. Máscaras catalogadas podem apenas solicitar
+uma avaliação auditada: a entrada genérica de execução permanece bloqueada.
+
+O esquema 5 registra a identidade do adaptador nas auditorias operacionais e
+mantém as avaliações de integração em tabela própria. Consulte
+[Registro seguro de adaptadores](adapter-registry.md).

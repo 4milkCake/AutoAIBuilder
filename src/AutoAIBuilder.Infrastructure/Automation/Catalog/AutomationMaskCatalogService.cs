@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Contracts;
@@ -81,7 +80,7 @@ public sealed class AutomationMaskCatalogService(
             issues.AddRange(ValidatePackage(mask, catalog));
             normalizedMask = serializer.Serialize(mask);
             normalizedCatalog = serializer.Serialize(catalog);
-            contentSha256 = ComputeContentSha256(
+            contentSha256 = AutomationMaskPackageFingerprint.Compute(
                 normalizedMask,
                 normalizedCatalog);
 
@@ -165,7 +164,7 @@ public sealed class AutomationMaskCatalogService(
                 "O pacote deixou de atender às regras de segurança.");
         }
 
-        var contentSha256 = ComputeContentSha256(
+        var contentSha256 = AutomationMaskPackageFingerprint.Compute(
             preview.MaskJson,
             preview.RuleCatalogJson);
         if (!string.Equals(
@@ -484,17 +483,5 @@ public sealed class AutomationMaskCatalogService(
         {
             return fallback;
         }
-    }
-
-    internal static string ComputeContentSha256(
-        string maskJson,
-        string catalogJson)
-    {
-        var content = Encoding.UTF8.GetBytes(
-            "AUTOAIBUILDER-MASK-PACKAGE-1\nMASK\n"
-            + maskJson
-            + "\nRULE-CATALOG\n"
-            + catalogJson);
-        return Convert.ToHexString(SHA256.HashData(content));
     }
 }

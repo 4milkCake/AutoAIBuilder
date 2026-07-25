@@ -22,8 +22,9 @@ origem.
 7. Usar `Importar como inativa`.
 8. Opcionalmente ativar uma versão para a integração futura.
 
-A ativação é apenas uma seleção no catálogo. O Marco 11.6A não possui registro
-de adaptadores e, portanto, nenhuma máscara catalogada é executável.
+A ativação é apenas uma seleção no catálogo. O Marco 11.6B acrescenta um
+registro interno de adaptadores e uma avaliação auditada, mas nenhuma máscara
+catalogada é executável.
 
 ## Validação de entrada
 
@@ -75,15 +76,22 @@ O esquema 4 do SQLite adiciona `AutomationMaskCatalog`. Cada registro conserva:
 
 A restrição do banco impede duas versões ativas do mesmo identificador.
 
+## Evolução no Marco 11.6B
+
+O catálogo agora pode comparar cada versão ativa com o registro interno. A
+comparação exige identidade, versão e SHA-256 exatos e pode ser solicitada pelo
+botão `Avaliar integração`. O resultado é persistido, mas o adaptador não é
+invocado. Consulte [Registro seguro de adaptadores](adapter-registry.md).
+
 ## Limites intencionais
 
 O catálogo ainda não:
 
-- associa uma máscara a um adaptador;
+- autoriza a execução de uma máscara importada;
 - avalia as condições declarativas das regras;
 - detecta AutoCAD, AltoQi Builder ou outras dependências;
 - importa código, scripts, DLLs, macros ou executáveis;
 - executa simulação ou aplicação de uma máscara real;
 - remove versões catalogadas.
 
-Essas ligações pertencem aos próximos passos do Marco 11.6.
+Essas ligações pertencem aos próximos passos após o Marco 11.6B.

@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using AutoAIBuilder.Application.Automation;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Dashboard;
@@ -46,6 +47,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IOperationCoordinator _operationCoordinator;
     private readonly IVerifiedCopyPilotService _verifiedCopyPilotService;
     private readonly IAutomationMaskCatalogService _automationMaskCatalogService;
+    private readonly IAutomationOrchestrator _automationOrchestrator;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -125,7 +127,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IDataMaintenanceService dataMaintenanceService,
         IOperationCoordinator operationCoordinator,
         IVerifiedCopyPilotService verifiedCopyPilotService,
-        IAutomationMaskCatalogService automationMaskCatalogService)
+        IAutomationMaskCatalogService automationMaskCatalogService,
+        IAutomationOrchestrator automationOrchestrator)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -146,6 +149,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _operationCoordinator = operationCoordinator;
         _verifiedCopyPilotService = verifiedCopyPilotService;
         _automationMaskCatalogService = automationMaskCatalogService;
+        _automationOrchestrator = automationOrchestrator;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -312,6 +316,10 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         ToggleMaskCatalogEntryCommand =
             new RelayCommand<AutomationMaskCatalogItemViewModel>(
                 ToggleMaskCatalogEntry,
+                item => item is not null && !IsMaskCatalogBusy);
+        AssessMaskIntegrationCommand =
+            new RelayCommand<AutomationMaskCatalogItemViewModel>(
+                AssessMaskIntegration,
                 item => item is not null && !IsMaskCatalogBusy);
         ChooseAutomationOutputCommand = new RelayCommand(
             ChooseAutomationOutputDirectory,

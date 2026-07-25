@@ -1,9 +1,14 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using AutoAIBuilder.Application.Automation;
+using AutoAIBuilder.Application.Automation.Adapters;
+using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Execution;
+using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Adapters;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
@@ -39,9 +44,25 @@ public sealed class VerifiedCopyPilotTests
         var executionService = new AutomationExecutionService(
             _auditRepository,
             [new VerifiedCopyPilotValidator()]);
+        var serializer = new AutomationContractJsonSerializer();
+        IAutomationAdapterRegistry adapterRegistry =
+            new AutomationAdapterRegistry(
+                [new VerifiedCopyAutomationAdapter(serializer)]);
+        IAutomationMaskCatalogRepository maskCatalogRepository =
+            new SqliteAutomationMaskCatalogRepository(database);
+        IAutomationIntegrationAssessmentRepository assessmentRepository =
+            new SqliteAutomationIntegrationAssessmentRepository(database);
+        IAutomationOrchestrator orchestrator =
+            new SafeAutomationOrchestrator(
+                maskCatalogRepository,
+                adapterRegistry,
+                assessmentRepository,
+                executionService,
+                serializer,
+                new AutomationContractValidator());
         _pilot = new VerifiedCopyPilotService(
             new AutomationPlanService(new AutomationContractValidator()),
-            executionService,
+            orchestrator,
             _auditRepository);
     }
 
@@ -101,7 +122,19 @@ public sealed class VerifiedCopyPilotTests
             manifest.RootElement
                 .GetProperty("verifiedCopySha256")
                 .GetString());
-        Assert.AreEqual(2, _auditRepository.GetRecent().Count);
+        var audits = _auditRepository.GetRecent();
+        Assert.AreEqual(2, audits.Count);
+        Assert.IsTrue(audits.All(
+            audit => audit.AdapterId
+                == VerifiedCopyPilotConstants.AdapterId));
+        Assert.IsTrue(audits.All(
+            audit => audit.AdapterVersion
+                == VerifiedCopyPilotConstants.AdapterVersion));
+        Assert.IsTrue(audits.All(
+            audit => audit.ContractSha256?.Length == 64));
+        Assert.IsTrue(audits.All(
+            audit => audit.RuleCatalogId
+                == VerifiedCopyPilotConstants.CatalogId));
     }
 
     [TestMethod]

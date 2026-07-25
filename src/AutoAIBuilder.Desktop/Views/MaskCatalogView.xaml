@@ -19,11 +19,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Marco 11.6A — Catálogo seguro de máscaras"
+                    <TextBlock Text="Marco 11.6B — Registro seguro de adaptadores"
                                FontSize="18"
                                FontWeight="SemiBold" />
                     <TextBlock Margin="0,5,0,0"
-                               Text="Importar contrato → validar → detectar conflito → armazenar inativo → ativar versão para integração futura."
+                               Text="Catalogar → ativar → revalidar SHA-256 → resolver registro interno → auditar prontidão."
                                Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="9"
                                TextWrapping="Wrap" />
@@ -35,7 +35,7 @@
                         BorderThickness="1"
                         CornerRadius="14"
                         VerticalAlignment="Center">
-                    <TextBlock Text="SEM ADAPTADOR • SEM EXECUÇÃO"
+                    <TextBlock Text="SEM DLL DINÂMICA • EXECUÇÃO REAL BLOQUEADA"
                                Foreground="#6EE7A2"
                                FontSize="9"
                                FontWeight="SemiBold" />
@@ -157,11 +157,72 @@
                                        FontSize="11"
                                        FontWeight="SemiBold" />
                             <TextBlock Margin="0,7,0,0"
-                                       Text="• Apenas arquivos JSON locais&#x0a;• Limite de 1 MiB por contrato&#x0a;• Propriedades desconhecidas rejeitadas&#x0a;• Mesma versão nunca é sobrescrita&#x0a;• Originais não são movidos nem alterados&#x0a;• Importação não carrega código executável"
+                                       Text="• Apenas arquivos JSON locais&#x0a;• Limite de 1 MiB por contrato&#x0a;• Propriedades desconhecidas rejeitadas&#x0a;• Mesma versão nunca é sobrescrita&#x0a;• Originais não são movidos nem alterados&#x0a;• Nenhuma DLL, script ou executável é importado&#x0a;• Resolução exige identidade, versão e SHA-256 exatos"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        FontSize="9"
                                        LineHeight="16"
                                        TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="13"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Registro interno de adaptadores"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="{Binding AdapterRegistrySummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <ItemsControl Margin="0,10,0,0"
+                                          ItemsSource="{Binding RegisteredAutomationAdapters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8"
+                                                Padding="10"
+                                                Background="#091523"
+                                                BorderBrush="{Binding StatusAccent}"
+                                                BorderThickness="1"
+                                                CornerRadius="5">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="10"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Status}"
+                                                               Foreground="{Binding StatusAccent}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold" />
+                                                </Grid>
+                                                <TextBlock Margin="0,4,0,0"
+                                                           Text="{Binding Identity}"
+                                                           Foreground="#8DD0FF"
+                                                           FontFamily="Consolas"
+                                                           FontSize="8" />
+                                                <TextBlock Margin="0,3,0,0"
+                                                           Text="{Binding Target}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontFamily="Consolas"
+                                                           FontSize="8" />
+                                                <TextBlock Margin="0,5,0,0"
+                                                           Text="{Binding Capabilities}"
+                                                           FontSize="8" />
+                                                <TextBlock Margin="0,3,0,0"
+                                                           Text="{Binding Policy}"
+                                                           Foreground="#F8C33A"
+                                                           FontSize="8"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -356,7 +417,7 @@
                                         BorderThickness="1"
                                         CornerRadius="12"
                                         VerticalAlignment="Top">
-                                    <TextBlock Text="Execução bloqueada no 11.6A"
+                                    <TextBlock Text="Execução real bloqueada no 11.6B"
                                                Foreground="#F8C33A"
                                                FontSize="8" />
                                 </Border>
@@ -427,6 +488,19 @@
                                                                FontWeight="SemiBold"
                                                                TextAlignment="Right" />
                                                     <TextBlock Margin="0,5,0,0"
+                                                               Text="{Binding IntegrationStatus}"
+                                                               Foreground="{Binding IntegrationAccent}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold"
+                                                               TextAlignment="Right"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,3,0,0"
+                                                               Text="{Binding IntegrationDetail}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextAlignment="Right"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,5,0,0"
                                                                Text="{Binding RuleCatalogIdentity}"
                                                                FontFamily="Consolas"
                                                                Foreground="{DynamicResource MutedTextBrush}"
@@ -443,7 +517,73 @@
                                                             Command="{Binding DataContext.ToggleMaskCatalogEntryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}"
                                                             Style="{DynamicResource SecondaryButtonStyle}" />
+                                                    <Button Margin="0,7,0,0"
+                                                            Content="Avaliar integração"
+                                                            Command="{Binding DataContext.AssessMaskIntegrationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{DynamicResource SecondaryButtonStyle}"
+                                                            ToolTip="Revalida o snapshot, resolve o registro interno e grava a decisão sem executar a máscara." />
                                                 </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Auditoria de prontidão"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="{Binding IntegrationAuditSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <ItemsControl Margin="0,12,0,0"
+                                          ItemsSource="{Binding IntegrationAssessments}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8"
+                                                Padding="11"
+                                                Background="#091523"
+                                                BorderBrush="{Binding StatusAccent}"
+                                                BorderThickness="1"
+                                                CornerRadius="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="160" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="120" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Identity}"
+                                                               Foreground="#8DD0FF"
+                                                               FontFamily="Consolas"
+                                                               FontSize="8" />
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Text="{Binding Status}"
+                                                               Foreground="{Binding StatusAccent}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1"
+                                                            Margin="12,0">
+                                                    <TextBlock Text="{Binding Adapter}"
+                                                               FontSize="8" />
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Text="{Binding Summary}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding EvaluatedAt}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="8"
+                                                           TextAlignment="Right" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>

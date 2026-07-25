@@ -70,6 +70,11 @@ continuarem presentes, o resultado é reutilizado. Se a pasta ou algum arquivo
 auditado não existir mais, o piloto não reutiliza a auditoria antiga e gera uma
 nova saída.
 
+Desde o Marco 11.6B, o adaptador do piloto é resolvido pelo registro interno por
+identidade, versão e SHA-256 exatos. O orquestrador revalida o contrato completo
+e associa a versão do adaptador à chave de idempotência e à auditoria antes de
+entregá-lo ao motor isolado.
+
 ## Limites intencionais
 
 O piloto não:

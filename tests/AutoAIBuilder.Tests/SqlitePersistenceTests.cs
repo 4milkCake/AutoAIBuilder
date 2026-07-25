@@ -236,10 +236,20 @@ public sealed class SqlitePersistenceTests
             WHERE type = 'table' AND name = 'AutomationMaskCatalog';
             """;
         Assert.AreEqual(1L, catalogCommand.ExecuteScalar());
+
+        using var assessmentCommand = verification.CreateCommand();
+        assessmentCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = 'AutomationIntegrationAssessments';
+            """;
+        Assert.AreEqual(1L, assessmentCommand.ExecuteScalar());
     }
 
     [TestMethod]
-    public void Initialize_UpgradesVersionThreeDatabaseToMaskCatalogSchema()
+    public void Initialize_UpgradesVersionThreeDatabaseThroughCurrentSchema()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_databasePath)!);
         using (var connection = new SqliteConnection(
@@ -249,6 +259,25 @@ public sealed class SqlitePersistenceTests
             using var command = connection.CreateCommand();
             command.CommandText =
                 """
+                CREATE TABLE AutomationAudits (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    PlanId TEXT NOT NULL,
+                    ProjectId TEXT NOT NULL,
+                    MaskId TEXT NOT NULL,
+                    MaskVersion TEXT NOT NULL,
+                    Mode INTEGER NOT NULL,
+                    Status INTEGER NOT NULL,
+                    IdempotencyKey TEXT NOT NULL,
+                    InputsJson TEXT NOT NULL,
+                    OutputsJson TEXT NOT NULL,
+                    PublishedPath TEXT NULL,
+                    RecoveryPath TEXT NULL,
+                    Summary TEXT NOT NULL,
+                    CreatedAt TEXT NOT NULL,
+                    CompletedAt TEXT NULL,
+                    UpdatedAt TEXT NOT NULL
+                );
+
                 CREATE TABLE SchemaMigrations (
                     Version INTEGER NOT NULL PRIMARY KEY,
                     AppliedAt TEXT NOT NULL,
@@ -264,7 +293,9 @@ public sealed class SqlitePersistenceTests
         var database = new SqliteDatabase(_databasePath);
         database.Initialize();
 
-        Assert.AreEqual(4, database.GetSchemaVersion());
+        Assert.AreEqual(
+            SqliteDatabase.CurrentSchemaVersion,
+            database.GetSchemaVersion());
         using var verification = database.OpenConnection();
         using var commandVerification = verification.CreateCommand();
         commandVerification.CommandText =
@@ -274,6 +305,81 @@ public sealed class SqlitePersistenceTests
             WHERE type = 'table' AND name = 'AutomationMaskCatalog';
             """;
         Assert.AreEqual(1L, commandVerification.ExecuteScalar());
+
+        using var assessmentVerification = verification.CreateCommand();
+        assessmentVerification.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = 'AutomationIntegrationAssessments';
+            """;
+        Assert.AreEqual(1L, assessmentVerification.ExecuteScalar());
+    }
+
+    [TestMethod]
+    public void Initialize_UpgradesVersionFourToAdapterRegistryAuditSchema()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(_databasePath)!);
+        using (var connection = new SqliteConnection(
+                   $"Data Source={_databasePath}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                CREATE TABLE AutomationAudits (
+                    Id TEXT NOT NULL PRIMARY KEY
+                );
+
+                CREATE TABLE AutomationMaskCatalog (
+                    Id TEXT NOT NULL PRIMARY KEY
+                );
+
+                CREATE TABLE SchemaMigrations (
+                    Version INTEGER NOT NULL PRIMARY KEY,
+                    AppliedAt TEXT NOT NULL,
+                    Description TEXT NOT NULL
+                );
+
+                INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+                VALUES (4, '2026-01-01T00:00:00.0000000+00:00', 'Teste');
+
+                PRAGMA user_version = 4;
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        var database = new SqliteDatabase(_databasePath);
+        database.Initialize();
+
+        Assert.AreEqual(
+            SqliteDatabase.CurrentSchemaVersion,
+            database.GetSchemaVersion());
+        using var verification = database.OpenConnection();
+        using var tableCommand = verification.CreateCommand();
+        tableCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = 'AutomationIntegrationAssessments';
+            """;
+        Assert.AreEqual(1L, tableCommand.ExecuteScalar());
+
+        using var columnCommand = verification.CreateCommand();
+        columnCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM pragma_table_info('AutomationAudits')
+            WHERE name IN (
+                'RuleCatalogId',
+                'RuleCatalogVersion',
+                'ContractSha256',
+                'AdapterId',
+                'AdapterVersion');
+            """;
+        Assert.AreEqual(5L, columnCommand.ExecuteScalar());
     }
 
     [TestMethod]
@@ -302,7 +408,12 @@ public sealed class SqlitePersistenceTests
             null,
             "Em execução.",
             now,
-            null);
+            null,
+            "regras-seguras",
+            "1.0.0",
+            new string('C', 64),
+            "autoaibuilder.adaptador-seguro",
+            "1.2.3");
         repository.Save(running);
 
         var loaded = repository.Get(running.Id);
@@ -310,6 +421,10 @@ public sealed class SqlitePersistenceTests
         Assert.AreEqual(running.Id, loaded.Id);
         Assert.AreEqual(running.Status, loaded.Status);
         Assert.AreEqual(running.IdempotencyKey, loaded.IdempotencyKey);
+        Assert.AreEqual(running.RuleCatalogId, loaded.RuleCatalogId);
+        Assert.AreEqual(running.ContractSha256, loaded.ContractSha256);
+        Assert.AreEqual(running.AdapterId, loaded.AdapterId);
+        Assert.AreEqual(running.AdapterVersion, loaded.AdapterVersion);
         Assert.AreEqual(input, loaded.Inputs.Single());
         Assert.AreEqual(0, loaded.OutputPaths.Count);
         Assert.AreEqual(

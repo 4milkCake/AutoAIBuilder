@@ -73,6 +73,15 @@ podem ser revalidadas e ter a prontidão auditada, mas a execução continua
 bloqueada. Consulte
 [Marco 11.6B — Registro seguro de adaptadores](docs/adapter-registry.md).
 
+O início do Marco 11.6C preserva e reaproveita a automação desenvolvida
+anteriormente no ChatGPT Work. Antes de criar um adaptador real, o conteúdo será
+inventariado, decomposto e comparado aos contratos existentes. O levantamento
+local confirmou que os artefatos funcionais ainda não foram fornecidos ao
+repositório; por isso, nenhuma regra ou máscara será inventada por suposição.
+Consulte a
+[avaliação de reaproveitamento](docs/automation-reuse-assessment.md) e o
+[pacote de recepção](docs/automation-source-intake.md).
+
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma
 idempotente. Eles permanecem intactos como fonte legada e nunca são apagados

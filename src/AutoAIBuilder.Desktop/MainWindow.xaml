@@ -134,6 +134,7 @@
         <KeyBinding Gesture="Ctrl+6" Command="{Binding OpenReportsCommand}" />
         <KeyBinding Gesture="Ctrl+7" Command="{Binding OpenHistoryCommand}" />
         <KeyBinding Gesture="Ctrl+8" Command="{Binding OpenDiagnosticsCommand}" />
+        <KeyBinding Gesture="Ctrl+9" Command="{Binding OpenAutomationCommand}" />
         <KeyBinding Modifiers="Control" Key="OemComma" Command="{Binding OpenSettingsCommand}" />
         <KeyBinding Key="F5" Command="{Binding RefreshCurrentSectionCommand}" />
         <KeyBinding Key="Escape" Command="{Binding DismissNotificationCommand}" />
@@ -1847,6 +1848,12 @@
                                Grid.ColumnSpan="2"
                                Margin="12"
                                Visibility="{Binding DiagnosticsVisibility}" />
+
+        <views:AutomationPilotView Grid.Row="1"
+                                   Grid.Column="1"
+                                   Grid.ColumnSpan="2"
+                                   Margin="12"
+                                   Visibility="{Binding AutomationVisibility}" />
 
         <!-- Right status rail -->
         <Grid Grid.Row="1"

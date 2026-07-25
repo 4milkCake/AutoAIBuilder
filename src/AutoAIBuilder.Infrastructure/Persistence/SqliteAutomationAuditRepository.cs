@@ -32,6 +32,30 @@ public sealed class SqliteAutomationAuditRepository(
         }
     }
 
+    public AutomationAuditEntry? GetLatestByPlanId(Guid planId)
+    {
+        if (planId == Guid.Empty)
+        {
+            return null;
+        }
+
+        lock (database.SyncRoot)
+        {
+            using var connection = database.OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                SelectColumns
+                + """
+                   WHERE PlanId = $planId
+                   ORDER BY CreatedAt DESC
+                   LIMIT 1;
+                  """;
+            command.Parameters.AddWithValue("$planId", planId.ToString("D"));
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? ReadEntry(reader) : null;
+        }
+    }
+
     public AutomationAuditEntry? GetSuccessfulByIdempotencyKey(
         string idempotencyKey)
     {

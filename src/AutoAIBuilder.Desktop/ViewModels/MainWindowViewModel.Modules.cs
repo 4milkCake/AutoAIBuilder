@@ -39,6 +39,19 @@ public sealed partial class MainWindowViewModel
                 StatusMessage = "Catálogo e integridade dos arquivos atualizados.";
             }),
         new WorkspaceModule(
+            WorkspaceSection.Automation,
+            () => SelectedProject is null
+                ? "Selecione um projeto ativo para usar o piloto seguro."
+                : "Piloto de cópia técnica pronto para simulação.",
+            activate: RefreshAutomationPilot,
+            refresh: () =>
+            {
+                RefreshProjectFiles();
+                RefreshAutomationPilot();
+                StatusMessage =
+                    "Entradas e estado do piloto seguro foram atualizados.";
+            }),
+        new WorkspaceModule(
             WorkspaceSection.ProjectRules,
             () => SelectedProject is null
                 ? "Selecione um projeto ativo para configurar suas regras."

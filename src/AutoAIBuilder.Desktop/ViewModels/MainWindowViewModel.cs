@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using AutoAIBuilder.Application.Automation.Pilots;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -42,6 +43,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IDialogService _dialogService;
     private readonly IDataMaintenanceService _dataMaintenanceService;
     private readonly IOperationCoordinator _operationCoordinator;
+    private readonly IVerifiedCopyPilotService _verifiedCopyPilotService;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -119,7 +121,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IFileSystemLauncher fileSystemLauncher,
         IDialogService dialogService,
         IDataMaintenanceService dataMaintenanceService,
-        IOperationCoordinator operationCoordinator)
+        IOperationCoordinator operationCoordinator,
+        IVerifiedCopyPilotService verifiedCopyPilotService)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -138,6 +141,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _dialogService = dialogService;
         _dataMaintenanceService = dataMaintenanceService;
         _operationCoordinator = operationCoordinator;
+        _verifiedCopyPilotService = verifiedCopyPilotService;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -149,7 +153,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             new(WorkspaceSection.Projects, "▤", "Projetos", false, null, "Ctrl+2"),
             new(WorkspaceSection.Files, "□", "Arquivos", false, null, "Ctrl+3"),
             new(null, "◫", "Máscaras", false, null),
-            new(null, "⌘", "Automação", false, null),
+            new(WorkspaceSection.Automation, "⌘", "Automação", false, "Piloto", "Ctrl+9"),
             new(null, "✦", "Agentes IA", false, null),
             new(null, "▥", "Bibliotecas", false, null),
             new(WorkspaceSection.ProjectRules, "◇", "Regras de projeto", false, null, "Ctrl+4"),
@@ -188,6 +192,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             "Regras",
             "Validação",
             "Relatórios",
+            "Automação",
             "Configurações",
             "Sistema"
         ];
@@ -214,6 +219,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         OpenDashboardCommand = new RelayCommand(() => Navigate(WorkspaceSection.Dashboard));
         OpenProjectsCommand = new RelayCommand(() => Navigate(WorkspaceSection.Projects));
         OpenFilesCommand = new RelayCommand(() => Navigate(WorkspaceSection.Files));
+        OpenAutomationCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.Automation));
         OpenProjectRulesCommand = new RelayCommand(() => Navigate(WorkspaceSection.ProjectRules));
         OpenValidatorsCommand = new RelayCommand(() => Navigate(WorkspaceSection.Validators));
         OpenReportsCommand = new RelayCommand(() => Navigate(WorkspaceSection.Reports));
@@ -278,6 +285,28 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             ExportProjectReportPdf,
             () => _currentReport is not null);
         RefreshDiagnosticsCommand = new RelayCommand(RefreshDiagnostics);
+        ChooseAutomationOutputCommand = new RelayCommand(
+            ChooseAutomationOutputDirectory,
+            () => !IsAutomationPilotRunning);
+        SimulateAutomationPilotCommand = new AsyncCommand(
+            SimulateAutomationPilotAsync,
+            CanSimulateAutomationPilot,
+            ReportAutomationPilotFailure,
+            TimeSpan.FromMinutes(6));
+        ExecuteAutomationPilotCommand = new AsyncCommand(
+            ExecuteAutomationPilotAsync,
+            CanExecuteAutomationPilot,
+            ReportAutomationPilotFailure,
+            TimeSpan.FromMinutes(6));
+        CancelAutomationPilotCommand = new RelayCommand(
+            CancelAutomationPilot,
+            () => IsAutomationPilotRunning);
+        ResetAutomationPilotCommand = new RelayCommand(
+            ResetAutomationPilot,
+            () => !IsAutomationPilotRunning);
+        OpenAutomationOutputCommand = new RelayCommand(
+            OpenAutomationOutput,
+            () => !string.IsNullOrWhiteSpace(AutomationPublishedPath));
 
         RefreshProjects(_activeProjectContext.ProjectId);
         RefreshOperationExecutions();
@@ -326,6 +355,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ICommand OpenDashboardCommand { get; }
     public ICommand OpenProjectsCommand { get; }
     public ICommand OpenFilesCommand { get; }
+    public ICommand OpenAutomationCommand { get; }
     public ICommand OpenProjectRulesCommand { get; }
     public ICommand OpenValidatorsCommand { get; }
     public ICommand OpenReportsCommand { get; }
@@ -456,6 +486,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(DashboardVisibility));
             OnPropertyChanged(nameof(ProjectsVisibility));
             OnPropertyChanged(nameof(FilesVisibility));
+            OnPropertyChanged(nameof(AutomationVisibility));
             OnPropertyChanged(nameof(ProjectRulesVisibility));
             OnPropertyChanged(nameof(SettingsVisibility));
             OnPropertyChanged(nameof(ValidatorsVisibility));
@@ -491,6 +522,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(SelectedProjectTitle));
             OnPropertyChanged(nameof(HasSelectedProject));
             RefreshProjectFiles();
+            RefreshAutomationPilotFiles();
             LoadProjectRules();
             RefreshActiveProject();
             SetManagedProject(

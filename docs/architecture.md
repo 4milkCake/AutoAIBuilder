@@ -67,8 +67,8 @@ operação conflitante seja iniciada sobre trabalho ainda ativo.
 
 `AsyncCommand` protege o WPF contra reentrada, captura falhas por comando e
 oferece cancelamento e timeout. Backup, restauração e realocação são os primeiros
-consumidores reais desse motor. Nenhuma implementação de automação foi
-registrada.
+consumidores reais desse motor. O piloto de cópia técnica também o utiliza, com
+exclusão por projeto.
 
 ## Fronteira das automações
 
@@ -88,9 +88,13 @@ confirma outra vez os checksums dos originais e só então publica uma pasta
 exclusiva. Falhas e cancelamentos movem artefatos parciais para recuperação, sem
 excluir conteúdo. Uma execução equivalente já concluída é reutilizada.
 
-Nenhum adaptador real foi registrado nesta etapa. Portanto, o shell ainda não
-executa fluxos, CAD, máscaras ou agentes. Consulte
-[Contratos seguros de automação](automation-contracts.md).
+O único adaptador registrado é o piloto
+`copia-tecnica-verificada@1.0.0`. Ele copia uma entrada isolada e gera um
+manifesto; não interpreta o conteúdo, não abre ferramentas CAD e não representa
+uma máscara definitiva. A tela exige simulação auditada e confirmação explícita
+antes da aplicação. Consulte [Cópia técnica verificada](verified-copy-pilot.md).
+
+Máscaras gráficas, CAD e agentes continuam desconectados.
 
 ## Diagnóstico e falhas
 

@@ -1,4 +1,5 @@
 using AutoAIBuilder.Application.Diagnostics;
+using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
@@ -11,6 +12,8 @@ using AutoAIBuilder.Application.Validation;
 using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
+using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 
@@ -74,8 +77,55 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.AreEqual(WorkspaceSection.Reports, viewModel.CurrentSection);
         Assert.IsTrue(viewModel.ValidationResults.Count > 0);
         StringAssert.Contains(viewModel.ReportContent, "RELATÓRIO DE PRONTIDÃO");
-        Assert.IsFalse(viewModel.Navigation.Single(item => item.Label == "Automação").IsAvailable);
+        Assert.IsTrue(viewModel.Navigation.Single(item => item.Label == "Automação").IsAvailable);
         Assert.IsFalse(viewModel.Navigation.Single(item => item.Label == "Máscaras").IsAvailable);
+    }
+
+    [TestMethod]
+    public async Task AutomationPilot_FollowsSimulationConfirmationCopyAndAuditFlow()
+    {
+        var logger = new InMemoryDiagnosticLogger();
+        var inputPath = Path.Combine(_directory, "entrada-piloto.dwg");
+        var outputRoot = Path.Combine(_directory, "pilot-output");
+        File.WriteAllText(inputPath, "arquivo técnico de integração");
+        var viewModel = CreateViewModel(
+            logger,
+            new StubDiagnosticService(logger),
+            filePicker: new PilotFilePicker(inputPath, outputRoot),
+            dialogService: new AcceptingPilotDialogService());
+
+        viewModel.ImportFileCommand.Execute(null);
+        viewModel.OpenAutomationCommand.Execute(null);
+        viewModel.ChooseAutomationOutputCommand.Execute(null);
+
+        Assert.AreEqual(
+            WorkspaceSection.Automation,
+            viewModel.CurrentSection);
+        Assert.IsNotNull(viewModel.SelectedAutomationInput);
+        Assert.AreEqual(outputRoot, viewModel.AutomationOutputRoot);
+
+        await ((AsyncCommand)viewModel.SimulateAutomationPilotCommand)
+            .ExecuteAsync();
+
+        Assert.AreEqual(
+            "SIMULAÇÃO APROVADA",
+            viewModel.AutomationPilotStage);
+        Assert.IsFalse(Directory.Exists(outputRoot));
+        Assert.IsTrue(viewModel.AutomationPlanActions.Count >= 7);
+        Assert.AreEqual(0, viewModel.AutomationPilotIssues.Count);
+
+        await ((AsyncCommand)viewModel.ExecuteAutomationPilotCommand)
+            .ExecuteAsync();
+
+        Assert.AreEqual(
+            "EXECUÇÃO CONCLUÍDA",
+            viewModel.AutomationPilotStage);
+        Assert.IsTrue(Directory.Exists(viewModel.AutomationPublishedPath));
+        Assert.IsTrue(viewModel.AutomationOutputFiles.Count >= 2);
+        Assert.IsTrue(viewModel.OperationExecutions.Count >= 2);
+        Assert.AreEqual(
+            "arquivo técnico de integração",
+            File.ReadAllText(inputPath));
     }
 
     [TestMethod]
@@ -123,6 +173,7 @@ public sealed class MainWindowViewModelIntegrationTests
         IDiagnosticService diagnosticService,
         bool seedProject = true,
         IFilePickerService? filePicker = null,
+        IDialogService? dialogService = null,
         IDataMaintenanceService? dataMaintenanceService = null,
         IOperationCoordinator? operationCoordinator = null)
     {
@@ -146,6 +197,14 @@ public sealed class MainWindowViewModelIntegrationTests
         operationCoordinator ??= new OperationCoordinator(
             new SqliteOperationExecutionRepository(operationDatabase),
             logger);
+        var automationAuditRepository =
+            new SqliteAutomationAuditRepository(operationDatabase);
+        var verifiedCopyPilot = new VerifiedCopyPilotService(
+            new AutomationPlanService(new AutomationContractValidator()),
+            new AutomationExecutionService(
+                automationAuditRepository,
+                [new VerifiedCopyPilotValidator()]),
+            automationAuditRepository);
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -162,9 +221,10 @@ public sealed class MainWindowViewModelIntegrationTests
             filePicker ?? new EmptyFilePicker(),
             new CancelledReportExportService(),
             new NoOpFileSystemLauncher(),
-            new RejectingDialogService(),
+            dialogService ?? new RejectingDialogService(),
             dataMaintenanceService ?? new StubDataMaintenanceService(_directory),
-            operationCoordinator);
+            operationCoordinator,
+            verifiedCopyPilot);
     }
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger
@@ -211,6 +271,9 @@ public sealed class MainWindowViewModelIntegrationTests
     {
         public IReadOnlyList<string> PickProjectFiles() => [];
 
+        public string? PickAutomationOutputDirectory(string? currentDirectory) =>
+            null;
+
         public string? PickDataBackupDestination(string suggestedFileName) => null;
 
         public string? PickDataBackupSource() => null;
@@ -223,8 +286,28 @@ public sealed class MainWindowViewModelIntegrationTests
     {
         public IReadOnlyList<string> PickProjectFiles() => [];
 
+        public string? PickAutomationOutputDirectory(string? currentDirectory) =>
+            null;
+
         public string? PickDataBackupDestination(string suggestedFileName) =>
             destination;
+
+        public string? PickDataBackupSource() => null;
+
+        public string? PickDataDirectory(string currentDirectory) => null;
+    }
+
+    private sealed class PilotFilePicker(
+        string inputPath,
+        string outputDirectory) : IFilePickerService
+    {
+        public IReadOnlyList<string> PickProjectFiles() => [inputPath];
+
+        public string? PickAutomationOutputDirectory(string? currentDirectory) =>
+            outputDirectory;
+
+        public string? PickDataBackupDestination(string suggestedFileName) =>
+            null;
 
         public string? PickDataBackupSource() => null;
 
@@ -260,6 +343,27 @@ public sealed class MainWindowViewModelIntegrationTests
         public bool ConfirmDataDirectoryChange(
             string currentDirectory,
             string newDirectory) => false;
+
+        public bool ConfirmVerifiedCopyExecution(
+            string fileName,
+            string outputRoot,
+            string sha256) => false;
+    }
+
+    private sealed class AcceptingPilotDialogService : IDialogService
+    {
+        public bool ConfirmRemoveFileReference(string fileName) => false;
+
+        public bool ConfirmRestoreDataBackup(string backupPath) => false;
+
+        public bool ConfirmDataDirectoryChange(
+            string currentDirectory,
+            string newDirectory) => false;
+
+        public bool ConfirmVerifiedCopyExecution(
+            string fileName,
+            string outputRoot,
+            string sha256) => true;
     }
 
     private sealed class StubDataMaintenanceService(string directory)

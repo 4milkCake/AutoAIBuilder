@@ -50,6 +50,13 @@ idempotência. Os contratos JSON estão em `schemas` e o ciclo completo está em
 [Contratos seguros de automação](docs/automation-contracts.md). Nenhuma máscara
 real foi importada ou habilitada nessa etapa.
 
+O Marco 11.5 habilita apenas o módulo `Automação` com o piloto
+`Cópia técnica verificada`. O usuário seleciona uma entrada catalogada e uma
+pasta de saída, executa uma simulação sem arquivos, confere o plano e confirma
+explicitamente a aplicação. O resultado contém uma cópia byte a byte e um
+manifesto JSON; o original é comprovado por SHA-256 antes e depois. Consulte
+[Marco 11.5 — Cópia técnica verificada](docs/verified-copy-pilot.md).
+
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma
 idempotente. Eles permanecem intactos como fonte legada e nunca são apagados
@@ -119,5 +126,6 @@ corrompidas são ignoradas na leitura sem impedir a inicialização. O arquivo a
 anteriores, eventos excessivamente grandes são reduzidos e valores com nomes de
 credenciais, senhas, tokens ou chaves são removidos antes da gravação.
 
-Leitura e edição CAD, aplicação visual de máscaras e integrações reais de IA
-ainda não foram implementadas.
+Leitura e edição CAD, aplicação visual das máscaras definitivas e integrações
+reais de IA ainda não foram implementadas. O piloto 11.5 não interpreta o
+conteúdo técnico dos arquivos.

@@ -79,13 +79,14 @@ Estados possíveis:
 Na inicialização, auditorias incompletas são marcadas como interrompidas. O
 aplicativo não apaga automaticamente pastas de staging ou recuperação.
 
-## Entrada para o Marco 11.5
+## Marco 11.5
 
-O primeiro piloto deverá implementar exatamente um adaptador de baixo risco e
-seguir:
+O primeiro adaptador de baixo risco está implementado:
 
 `selecionar → validar → simular → mostrar plano → confirmar → executar sobre
 cópia → validar saída → registrar resultado`.
 
-Até esse piloto existir, a tela continua declarando as automações como
-indisponíveis e nenhuma máscara real é considerada instalada.
+Ele produz uma cópia byte a byte e um manifesto, sem interpretar o arquivo. A
+implementação e os limites estão documentados em
+[Cópia técnica verificada](verified-copy-pilot.md). Nenhuma máscara gráfica real
+é considerada instalada.

@@ -9,4 +9,9 @@ public interface IDialogService
     bool ConfirmDataDirectoryChange(
         string currentDirectory,
         string newDirectory);
+
+    bool ConfirmVerifiedCopyExecution(
+        string fileName,
+        string outputRoot,
+        string sha256);
 }

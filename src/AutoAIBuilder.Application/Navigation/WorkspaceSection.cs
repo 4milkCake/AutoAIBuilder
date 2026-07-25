@@ -5,6 +5,7 @@ public enum WorkspaceSection
     Dashboard,
     Projects,
     Files,
+    Automation,
     ProjectRules,
     Settings,
     Validators,

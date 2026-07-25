@@ -20,6 +20,24 @@ public sealed class FilePickerService : IFilePickerService
             : [];
     }
 
+    public string? PickAutomationOutputDirectory(string? currentDirectory)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Selecionar pasta de saída da cópia técnica",
+            Multiselect = false,
+            InitialDirectory =
+                !string.IsNullOrWhiteSpace(currentDirectory)
+                && Directory.Exists(currentDirectory)
+                    ? currentDirectory
+                    : null
+        };
+
+        return dialog.ShowDialog() == true
+            ? dialog.FolderName
+            : null;
+    }
+
     public string? PickDataBackupDestination(string suggestedFileName)
     {
         var dialog = new SaveFileDialog

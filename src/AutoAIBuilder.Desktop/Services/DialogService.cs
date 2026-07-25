@@ -47,4 +47,24 @@ public sealed class DialogService : IDialogService
 
         return result == MessageBoxResult.Yes;
     }
+
+    public bool ConfirmVerifiedCopyExecution(
+        string fileName,
+        string outputRoot,
+        string sha256)
+    {
+        var result = MessageBox.Show(
+            "Executar o piloto “Cópia técnica verificada”?\n\n"
+            + $"Entrada catalogada:\n{fileName}\n\n"
+            + $"Destino:\n{outputRoot}\n\n"
+            + $"SHA-256 simulado:\n{sha256}\n\n"
+            + "O original não será editado. A execução trabalhará sobre uma "
+            + "cópia isolada e publicará uma nova pasta com manifesto.",
+            "Confirmar execução sobre cópia",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question,
+            MessageBoxResult.No);
+
+        return result == MessageBoxResult.Yes;
+    }
 }

@@ -1,5 +1,7 @@
 using System.IO;
 using AutoAIBuilder.Application.Automation.Execution;
+using AutoAIBuilder.Application.Automation.Pilots;
+using AutoAIBuilder.Application.Automation.Validation;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -14,6 +16,8 @@ using AutoAIBuilder.Application.Validation;
 using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
+using AutoAIBuilder.Infrastructure.Automation;
+using AutoAIBuilder.Infrastructure.Automation.Pilots;
 using AutoAIBuilder.Infrastructure.Diagnostics;
 using AutoAIBuilder.Infrastructure.Persistence;
 using AutoAIBuilder.Infrastructure.Reports;
@@ -98,6 +102,14 @@ public static class DesktopCompositionRoot
             new OperationCoordinator(
                 new SqliteOperationExecutionRepository(database),
                 DiagnosticLogger);
+        IVerifiedCopyPilotService verifiedCopyPilotService =
+            new VerifiedCopyPilotService(
+                new AutomationPlanService(
+                    new AutomationContractValidator()),
+                new AutomationExecutionService(
+                    automationAuditRepository,
+                    [new VerifiedCopyPilotValidator()]),
+                automationAuditRepository);
         operationCoordinator.RecoverInterruptedOperations();
         if (interruptedAutomations > 0)
         {
@@ -129,7 +141,8 @@ public static class DesktopCompositionRoot
             new FileSystemLauncher(),
             new DialogService(),
             dataMaintenanceService,
-            operationCoordinator);
+            operationCoordinator,
+            verifiedCopyPilotService);
     }
 
     private static void WriteMigrationDiagnostics(

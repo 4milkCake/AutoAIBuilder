@@ -80,7 +80,7 @@ public sealed class AutomationExecutionService : IAutomationExecutionService
                 ? _auditRepository.GetSuccessfulByIdempotencyKey(
                     plan.IdempotencyKey)
                 : null;
-            if (previous is not null)
+            if (previous is not null && CanReuse(previous))
             {
                 var reused = CreateAudit(
                     plan,
@@ -462,6 +462,13 @@ public sealed class AutomationExecutionService : IAutomationExecutionService
         IEnumerable<AutomationValidationIssue> issues) =>
         issues.Any(
             issue => issue.Severity == AutomationValidationSeverity.Error);
+
+    private static bool CanReuse(AutomationAuditEntry entry) =>
+        !string.IsNullOrWhiteSpace(entry.PublishedPath)
+        && Directory.Exists(entry.PublishedPath)
+        && entry.OutputPaths.Count > 0
+        && entry.OutputPaths.All(
+            path => File.Exists(path) || Directory.Exists(path));
 
     private static bool IsWithin(string root, string path)
     {

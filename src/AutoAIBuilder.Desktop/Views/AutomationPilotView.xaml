@@ -1,0 +1,373 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.AutomationPilotView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16"
+                Style="{DynamicResource CardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Piloto 11.5 — Cópia técnica verificada"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="Primeiro fluxo real: validar → simular → confirmar → executar sobre cópia → validar → auditar."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="10"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Padding="12,6"
+                        Background="#102B22"
+                        BorderBrush="#285D46"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="SEM EDIÇÃO DO ORIGINAL"
+                               Foreground="#36D17C"
+                               FontSize="9"
+                               FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="1. Entrada catalogada"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="A lista contém somente arquivos acessíveis do projeto ativo."
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <ComboBox Margin="0,10,0,0"
+                                      ItemsSource="{Binding AutomationPilotFiles}"
+                                      SelectedItem="{Binding SelectedAutomationInput}"
+                                      DisplayMemberPath="Name"
+                                      Style="{DynamicResource ProjectSelectorStyle}"
+                                      AutomationProperties.Name="Arquivo de entrada do piloto" />
+                            <StackPanel Margin="0,10,0,0"
+                                        Visibility="{Binding EmptyAutomationPilotFilesVisibility}">
+                                <TextBlock Text="Nenhum arquivo acessível foi catalogado."
+                                           Foreground="#F8C33A"
+                                           FontSize="10"
+                                           TextWrapping="Wrap" />
+                                <Button Margin="0,8,0,0"
+                                        Content="Ir para Arquivos"
+                                        Command="{Binding OpenFilesCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="2. Pasta de saída"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <Border Padding="10,8"
+                                    Background="#091523"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding AutomationOutputRootDisplay}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap"
+                                           ToolTip="{Binding AutomationOutputRoot}" />
+                            </Border>
+                            <Button Margin="0,9,0,0"
+                                    Content="Escolher pasta de saída"
+                                    Command="{Binding ChooseAutomationOutputCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="3. Simulação"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="{Binding AutomationPilotSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <Border Margin="0,10,0,0"
+                                    Padding="10,6"
+                                    Background="#091523"
+                                    BorderBrush="{Binding AutomationPilotStageAccent}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding AutomationPilotStage}"
+                                           Foreground="{Binding AutomationPilotStageAccent}"
+                                           FontSize="10"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                            <Button Margin="0,12,0,0"
+                                    Content="Validar e simular"
+                                    Command="{Binding SimulateAutomationPilotCommand}"
+                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                            <Button Margin="0,8,0,0"
+                                    Content="Limpar plano"
+                                    Command="{Binding ResetAutomationPilotCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}"
+                            Visibility="{Binding AutomationOperationVisibility}">
+                        <StackPanel>
+                            <TextBlock Text="Operação protegida"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="{Binding AutomationPilotStep}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <ProgressBar Margin="0,10,0,0"
+                                         Value="{Binding AutomationPilotProgress, Mode=OneWay}"
+                                         Maximum="100"
+                                         AutomationProperties.Name="Progresso da automação piloto" />
+                            <Button Margin="0,10,0,0"
+                                    Content="Solicitar cancelamento"
+                                    Command="{Binding CancelAutomationPilotCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="14"
+                            Background="#102641"
+                            BorderBrush="#28557A"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Garantias deste piloto"
+                                       Foreground="#8DD0FF"
+                                       FontSize="11"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="• Nenhuma leitura ou edição CAD&#x0a;• Cópia com criação exclusiva&#x0a;• SHA-256 antes e depois&#x0a;• Falhas preservadas para inspeção&#x0a;• Confirmação obrigatória antes de gravar"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       LineHeight="16"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer Grid.Column="2"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <Grid>
+                            <Grid Visibility="{Binding AutomationPlanEmptyVisibility}">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="◎"
+                                               Foreground="{DynamicResource PrimaryBrush}"
+                                               FontSize="34"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Margin="0,10,0,0"
+                                               Text="O plano seguro aparecerá aqui"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="A simulação calcula evidências sem criar arquivos na saída."
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Visibility="{Binding AutomationPlanVisibility}">
+                                <TextBlock Text="Plano antes da execução"
+                                           Style="{DynamicResource SectionTitleStyle}" />
+                                <TextBlock Text="SHA-256 do original"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Text="{Binding AutomationPlanChecksum}"
+                                           FontFamily="Consolas"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Chave de idempotência"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="9" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Text="{Binding AutomationPlanIdempotencyKey}"
+                                           FontFamily="Consolas"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Margin="0,16,0,8"
+                                           Text="Etapas planejadas"
+                                           FontSize="12"
+                                           FontWeight="SemiBold" />
+                                <ItemsControl ItemsSource="{Binding AutomationPlanActions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,7"
+                                                    Padding="10"
+                                                    Background="#091523"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="32" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="24"
+                                                            Height="24"
+                                                            BorderBrush="{Binding Accent}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="12">
+                                                        <TextBlock Text="{Binding Order}"
+                                                                   Foreground="{Binding Accent}"
+                                                                   FontSize="9"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1"
+                                                               Margin="8,0"
+                                                               Text="{Binding Description}"
+                                                               FontSize="9"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding Safety}"
+                                                               Foreground="{Binding Accent}"
+                                                               FontSize="8"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <ItemsControl Margin="0,8,0,0"
+                                              ItemsSource="{Binding AutomationPilotIssues}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,7"
+                                                    Padding="10"
+                                                    Background="#181722"
+                                                    BorderBrush="{Binding Accent}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Severity}"
+                                                               Foreground="{Binding Accent}"
+                                                               FontSize="9"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Text="{Binding Message}"
+                                                               FontSize="9"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Margin="0,12,0,0"
+                                        Content="Confirmar e executar sobre cópia"
+                                        Command="{Binding ExecuteAutomationPilotCommand}"
+                                        Style="{DynamicResource PrimaryButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Resultado auditado"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Text="{Binding AutomationResultStatus}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+
+                            <StackPanel Margin="0,12,0,0"
+                                        Visibility="{Binding AutomationResultVisibility}">
+                                <TextBlock Text="Pasta publicada"
+                                           Foreground="#36D17C"
+                                           FontSize="10"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Text="{Binding AutomationPublishedPath}"
+                                           FontSize="9"
+                                           TextWrapping="Wrap" />
+                                <ItemsControl Margin="0,8,0,0"
+                                              ItemsSource="{Binding AutomationOutputFiles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,2,0,0"
+                                                       Text="{Binding StringFormat=• {0}}"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8"
+                                                       TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Button Margin="0,10,0,0"
+                                        Content="Abrir pasta publicada"
+                                        Command="{Binding OpenAutomationOutputCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </StackPanel>
+
+                            <Border Margin="0,12,0,0"
+                                    Padding="10"
+                                    Background="#332A12"
+                                    BorderBrush="#7A5927"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Visibility="{Binding AutomationRecoveryVisibility}">
+                                <StackPanel>
+                                    <TextBlock Text="Artefatos preservados para recuperação"
+                                               Foreground="#F8C33A"
+                                               FontSize="9"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="{Binding AutomationRecoveryPath}"
+                                               FontSize="8"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

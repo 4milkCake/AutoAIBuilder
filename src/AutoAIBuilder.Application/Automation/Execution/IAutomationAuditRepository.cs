@@ -4,6 +4,8 @@ public interface IAutomationAuditRepository
 {
     AutomationAuditEntry? Get(Guid id);
 
+    AutomationAuditEntry? GetLatestByPlanId(Guid planId);
+
     AutomationAuditEntry? GetSuccessfulByIdempotencyKey(string idempotencyKey);
 
     IReadOnlyList<AutomationAuditEntry> GetRecent(int maximumEntries = 50);

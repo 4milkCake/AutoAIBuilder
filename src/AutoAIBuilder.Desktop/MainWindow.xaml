@@ -1712,7 +1712,7 @@
                                            FontSize="8"
                                            TextWrapping="Wrap" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="Projetos, preferências e histórico usam SQLite transacional. Os arquivos catalogados permanecem intactos em seus caminhos originais."
+                                           Text="Projetos, preferências, histórico e execuções operacionais usam SQLite transacional. Operações incompatíveis são serializadas e possuem cancelamento e timeout."
                                            Foreground="{StaticResource MutedTextBrush}"
                                            FontSize="9"
                                            TextWrapping="Wrap" />
@@ -1724,10 +1724,48 @@
                                         Content="Restaurar backup"
                                         Command="{Binding RestoreDataBackupCommand}"
                                         Style="{StaticResource SecondaryButtonStyle}" />
-                                <Button Margin="0,8,0,0"
-                                        Content="Alterar pasta de dados"
-                                        Command="{Binding ChangeDataDirectoryCommand}"
-                                        Style="{StaticResource SecondaryButtonStyle}" />
+                                 <Button Margin="0,8,0,0"
+                                         Content="Alterar pasta de dados"
+                                         Command="{Binding ChangeDataDirectoryCommand}"
+                                         Style="{StaticResource SecondaryButtonStyle}" />
+                                <Border Margin="0,12,0,0"
+                                        Padding="10"
+                                        Background="#102641"
+                                        BorderBrush="{StaticResource PrimaryBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        Visibility="{Binding DataOperationVisibility}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Motor operacional"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="9" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding DataOperationProgress, StringFormat={}{0}%}"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontSize="9" />
+                                        </Grid>
+                                        <TextBlock Margin="0,5,0,0"
+                                                   Text="{Binding DataOperationStep}"
+                                                   FontSize="9"
+                                                   TextWrapping="Wrap" />
+                                        <ProgressBar Margin="0,8,0,0"
+                                                     Height="5"
+                                                     Maximum="100"
+                                                     Value="{Binding DataOperationProgress, Mode=OneWay}"
+                                                     AutomationProperties.Name="Progresso da operação de dados" />
+                                        <Button Margin="0,9,0,0"
+                                                Content="Cancelar operação"
+                                                Command="{Binding CancelDataOperationCommand}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                AutomationProperties.HelpText="Solicita cancelamento cooperativo e seguro da operação em andamento." />
+                                    </StackPanel>
+                                </Border>
                                 <Border Margin="0,12,0,0"
                                         Padding="10"
                                         Background="#0A1624"

@@ -1,4 +1,5 @@
 using AutoAIBuilder.Application.History;
+using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Settings;
 using AutoAIBuilder.Domain.Projects;
@@ -68,10 +69,28 @@ public sealed class SqlitePersistenceTests
         var activeRepository =
             new SqliteActiveProjectStateRepository(database);
         activeRepository.Save(project.Id);
+        var execution = new OperationExecution(
+            Guid.NewGuid(),
+            "data-backup",
+            "Criar backup",
+            "local-data-store",
+            project.Id,
+            OperationExecutionStatus.Succeeded,
+            100,
+            "Operação concluída",
+            DateTimeOffset.UtcNow.AddSeconds(-2),
+            DateTimeOffset.UtcNow.AddSeconds(-1),
+            DateTimeOffset.UtcNow,
+            300,
+            null,
+            null);
+        new SqliteOperationExecutionRepository(database).Save(execution);
 
         var reopened = new SqliteDatabase(_databasePath);
 
-        Assert.AreEqual(1, reopened.GetSchemaVersion());
+        Assert.AreEqual(
+            SqliteDatabase.CurrentSchemaVersion,
+            reopened.GetSchemaVersion());
         Assert.AreEqual("ok", reopened.QuickCheck());
         Assert.AreEqual(
             project.Name,
@@ -87,6 +106,9 @@ public sealed class SqlitePersistenceTests
         Assert.AreEqual(
             project.Id,
             new SqliteActiveProjectStateRepository(reopened).Load());
+        Assert.AreEqual(
+            execution,
+            new SqliteOperationExecutionRepository(reopened).Get(execution.Id));
     }
 
     [TestMethod]
@@ -158,4 +180,100 @@ public sealed class SqlitePersistenceTests
             "{ projeto inválido",
             verificationCommand.ExecuteScalar() as string);
     }
+
+    [TestMethod]
+    public void Initialize_UpgradesVersionOneDatabaseToOperationalSchema()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(_databasePath)!);
+        using (var connection = new SqliteConnection(
+                   $"Data Source={_databasePath}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                CREATE TABLE SchemaMigrations (
+                    Version INTEGER NOT NULL PRIMARY KEY,
+                    AppliedAt TEXT NOT NULL,
+                    Description TEXT NOT NULL
+                );
+                INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+                VALUES (1, '2026-01-01T00:00:00.0000000+00:00', 'Teste');
+                PRAGMA user_version = 1;
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        var database = new SqliteDatabase(_databasePath);
+        database.Initialize();
+
+        Assert.AreEqual(SqliteDatabase.CurrentSchemaVersion, database.GetSchemaVersion());
+        using var verification = database.OpenConnection();
+        using var tableCommand = verification.CreateCommand();
+        tableCommand.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'OperationExecutions';
+            """;
+        Assert.AreEqual(1L, tableCommand.ExecuteScalar());
+    }
+
+    [TestMethod]
+    public void OperationRepository_RecoversIncompleteExecutions()
+    {
+        var database = new SqliteDatabase(_databasePath);
+        var repository = new SqliteOperationExecutionRepository(database);
+        var createdAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var pending = CreateOperation(
+            "pending",
+            OperationExecutionStatus.Pending,
+            createdAt);
+        var running = CreateOperation(
+            "running",
+            OperationExecutionStatus.Running,
+            createdAt.AddSeconds(1));
+        var completed = CreateOperation(
+            "completed",
+            OperationExecutionStatus.Succeeded,
+            createdAt.AddSeconds(2));
+        repository.Save(pending);
+        repository.Save(running);
+        repository.Save(completed);
+
+        var recovered = repository.MarkIncompleteAsInterrupted(
+            DateTimeOffset.UtcNow,
+            "Encerramento anterior.");
+
+        Assert.AreEqual(2, recovered);
+        Assert.AreEqual(
+            OperationExecutionStatus.Interrupted,
+            repository.Get(pending.Id)?.Status);
+        Assert.AreEqual(
+            OperationExecutionStatus.Interrupted,
+            repository.Get(running.Id)?.Status);
+        Assert.AreEqual(
+            OperationExecutionStatus.Succeeded,
+            repository.Get(completed.Id)?.Status);
+    }
+
+    private static OperationExecution CreateOperation(
+        string type,
+        OperationExecutionStatus status,
+        DateTimeOffset createdAt) =>
+        new(
+            Guid.NewGuid(),
+            type,
+            type,
+            "test-resource",
+            null,
+            status,
+            status == OperationExecutionStatus.Succeeded ? 100 : 20,
+            "Teste",
+            createdAt,
+            status == OperationExecutionStatus.Pending ? null : createdAt,
+            status == OperationExecutionStatus.Succeeded ? createdAt : null,
+            60,
+            null,
+            null);
 }

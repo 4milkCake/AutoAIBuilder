@@ -26,6 +26,8 @@ O `MainWindowViewModel` é parcial e está separado por responsabilidade:
 - `MainWindowViewModel.Validation.cs`: validação preventiva;
 - `MainWindowViewModel.Reports.cs`: geração e exportação;
 - `MainWindowViewModel.History.cs`: histórico local;
+- `MainWindowViewModel.Diagnostics.cs`: diagnóstico e execuções operacionais;
+- `MainWindowViewModel.DataMaintenance.cs`: backup, restauração e realocação;
 - `MainWindowViewModel.cs`: estado compartilhado, projetos, arquivos e painel.
 
 Essa divisão preserva os bindings atuais enquanto permite extrair ViewModels
@@ -42,7 +44,31 @@ As demais telas podem seguir o mesmo padrão sem alterar o contrato do shell.
 - `IDialogService`: confirmações específicas da interface Windows;
 - `IDiagnosticLogger`: eventos técnicos estruturados em JSON Lines;
 - `IDiagnosticService`: fotografia verificável do ambiente e da persistência;
+- `IOperationCoordinator`: ciclo assíncrono, cancelamento, timeout e exclusão
+  mútua de operações;
 - serviços de arquivo e exportação: integração com diálogos e Explorer.
+
+## Motor operacional
+
+`OperationCoordinator` é a fronteira de execução para tarefas demoradas. Cada
+operação recebe identidade, tipo, nome, projeto opcional, recurso exclusivo e
+timeout. O ciclo `Pending → Running → estado terminal` é persistido antes e
+durante a execução.
+
+Os estados terminais são `Succeeded`, `Cancelled`, `TimedOut`, `Failed` e
+`Interrupted`. Exceções ficam associadas à execução e são registradas sem
+escapar para a interface. Progresso nunca retrocede. Um recurso, como o banco de
+dados local, aceita somente uma operação incompatível por vez.
+
+Cancelamento e timeout são cooperativos. Se uma implementação demorar a observar
+o token de cancelamento, o resultado é encerrado para a interface, mas o recurso
+continua reservado até a tarefa subjacente terminar. Isso impede que uma segunda
+operação conflitante seja iniciada sobre trabalho ainda ativo.
+
+`AsyncCommand` protege o WPF contra reentrada, captura falhas por comando e
+oferece cancelamento e timeout. Backup, restauração e realocação são os primeiros
+consumidores reais desse motor. Nenhuma implementação de automação foi
+registrada.
 
 ## Fronteira das automações
 
@@ -59,7 +85,12 @@ na Infrastructure sem depender da janela WPF.
 Eventos de ciclo de vida, avisos, erros e exceções globais são registrados sem
 interromper a operação principal. A tela Diagnóstico exibe o estado do runtime,
 os caminhos locais, a integridade do banco SQLite, as fontes legadas e os
-últimos eventos.
+últimos eventos e execuções operacionais.
+
+O log JSON Lines tem tamanho máximo por arquivo, rotação numerada e quantidade
+máxima de arquivos anteriores. Campos excessivos são limitados e propriedades
+ou trechos identificados como senha, token, segredo, chave de API, autorização
+ou credencial são removidos antes da serialização.
 
 Um registro de projeto com conteúdo inválido é omitido do catálogo somente para
 permitir que o aplicativo abra, mas o banco permanece protegido contra novas
@@ -70,7 +101,8 @@ gravações até que o conteúdo seja recuperado explicitamente.
 Os repositórios operacionais usam `Microsoft.Data.Sqlite` e um banco com versão
 de esquema registrada por `PRAGMA user_version` e `SchemaMigrations`. Cada
 operação de escrita é transacional, as conexões usam WAL e possuem tempo de
-espera para contenção.
+espera para contenção. O esquema 2 acrescenta `OperationExecutions`, que permite
+recuperar o estado operacional depois de uma falha ou encerramento.
 
 Os JSON das versões anteriores são tratados como fontes legadas. A migração é
 idempotente, registra cada origem em `DataMigrations` e preserva os arquivos

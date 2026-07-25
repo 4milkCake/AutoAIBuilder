@@ -3,6 +3,7 @@ using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
+using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Reports;
 using AutoAIBuilder.Application.Settings;
@@ -11,6 +12,7 @@ using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
 
 namespace AutoAIBuilder.Tests;
 
@@ -32,6 +34,7 @@ public sealed class MainWindowViewModelIntegrationTests
     [TestCleanup]
     public void Cleanup()
     {
+        SqliteConnection.ClearAllPools();
         if (Directory.Exists(_directory))
         {
             Directory.Delete(_directory, recursive: true);
@@ -90,10 +93,38 @@ public sealed class MainWindowViewModelIntegrationTests
         StringAssert.Contains(viewModel.StatusMessage, "Crie um projeto");
     }
 
+    [TestMethod]
+    public async Task DataBackupCommand_UsesOperationalEngineAndPersistsResult()
+    {
+        var logger = new InMemoryDiagnosticLogger();
+        var destination = Path.Combine(_directory, "backup.aabbackup");
+        var viewModel = CreateViewModel(
+            logger,
+            new StubDiagnosticService(logger),
+            filePicker: new BackupFilePicker(destination));
+
+        var command = (AsyncCommand)viewModel.CreateDataBackupCommand;
+        await command.ExecuteAsync();
+
+        Assert.IsFalse(viewModel.IsDataOperationRunning);
+        Assert.AreEqual(100, viewModel.DataOperationProgress);
+        Assert.AreEqual(1, viewModel.OperationExecutions.Count);
+        Assert.AreEqual(
+            "Concluída",
+            viewModel.OperationExecutions.Single().Status);
+        StringAssert.Contains(viewModel.DataMaintenanceStatus, destination);
+        Assert.IsTrue(
+            logger.GetRecent().Any(entry =>
+                entry.Source == "OperationEngine"));
+    }
+
     private MainWindowViewModel CreateViewModel(
         IDiagnosticLogger logger,
         IDiagnosticService diagnosticService,
-        bool seedProject = true)
+        bool seedProject = true,
+        IFilePickerService? filePicker = null,
+        IDataMaintenanceService? dataMaintenanceService = null,
+        IOperationCoordinator? operationCoordinator = null)
     {
         var workspaceService = new ProjectWorkspaceService(
             new JsonProjectRepository(Path.Combine(_directory, "projects.json")));
@@ -109,6 +140,12 @@ public sealed class MainWindowViewModelIntegrationTests
             new JsonApplicationSettingsRepository(Path.Combine(_directory, "settings.json")));
         var activityService = new ActivityLogService(
             new JsonActivityLogRepository(Path.Combine(_directory, "activity.json")));
+        var operationDatabase = new SqliteDatabase(
+            Path.Combine(_directory, "operations.db"));
+        operationDatabase.Initialize();
+        operationCoordinator ??= new OperationCoordinator(
+            new SqliteOperationExecutionRepository(operationDatabase),
+            logger);
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -122,11 +159,12 @@ public sealed class MainWindowViewModelIntegrationTests
             diagnosticService,
             new NavigationService(),
             new NotificationService(),
-            new EmptyFilePicker(),
+            filePicker ?? new EmptyFilePicker(),
             new CancelledReportExportService(),
             new NoOpFileSystemLauncher(),
             new RejectingDialogService(),
-            new StubDataMaintenanceService(_directory));
+            dataMaintenanceService ?? new StubDataMaintenanceService(_directory),
+            operationCoordinator);
     }
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger
@@ -180,6 +218,19 @@ public sealed class MainWindowViewModelIntegrationTests
         public string? PickDataDirectory(string currentDirectory) => null;
     }
 
+    private sealed class BackupFilePicker(string destination)
+        : IFilePickerService
+    {
+        public IReadOnlyList<string> PickProjectFiles() => [];
+
+        public string? PickDataBackupDestination(string suggestedFileName) =>
+            destination;
+
+        public string? PickDataBackupSource() => null;
+
+        public string? PickDataDirectory(string currentDirectory) => null;
+    }
+
     private sealed class CancelledReportExportService : IReportExportService
     {
         public string? ExportTextReport(string suggestedFileName, string content) => null;
@@ -220,7 +271,7 @@ public sealed class MainWindowViewModelIntegrationTests
 
         public string BackupDirectory => Path.Combine(directory, "Backups");
 
-        public int SchemaVersion => 1;
+        public int SchemaVersion => SqliteDatabase.CurrentSchemaVersion;
 
         public DataBackupResult CreateBackup(string destinationPath) =>
             new(destinationPath, DateTimeOffset.Now, 0);

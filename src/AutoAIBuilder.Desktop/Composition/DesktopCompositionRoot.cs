@@ -5,6 +5,7 @@ using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
+using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Reports;
 using AutoAIBuilder.Application.Settings;
@@ -84,6 +85,11 @@ public static class DesktopCompositionRoot
             database);
         IDataMaintenanceService dataMaintenanceService =
             new SqliteDataMaintenanceService(database);
+        IOperationCoordinator operationCoordinator =
+            new OperationCoordinator(
+                new SqliteOperationExecutionRepository(database),
+                DiagnosticLogger);
+        operationCoordinator.RecoverInterruptedOperations();
 
         return new MainWindowViewModel(
             new ProjectDashboardProvider(),
@@ -102,7 +108,8 @@ public static class DesktopCompositionRoot
             new ReportExportService(new SimplePdfReportRenderer()),
             new FileSystemLauncher(),
             new DialogService(),
-            dataMaintenanceService);
+            dataMaintenanceService,
+            operationCoordinator);
     }
 
     private static void WriteMigrationDiagnostics(

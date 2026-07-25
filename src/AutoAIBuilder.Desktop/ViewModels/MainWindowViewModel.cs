@@ -11,6 +11,7 @@ using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
 using AutoAIBuilder.Application.Notifications;
+using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Reports;
 using AutoAIBuilder.Application.Settings;
@@ -40,6 +41,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IFileSystemLauncher _fileSystemLauncher;
     private readonly IDialogService _dialogService;
     private readonly IDataMaintenanceService _dataMaintenanceService;
+    private readonly IOperationCoordinator _operationCoordinator;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -116,7 +118,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IReportExportService reportExportService,
         IFileSystemLauncher fileSystemLauncher,
         IDialogService dialogService,
-        IDataMaintenanceService dataMaintenanceService)
+        IDataMaintenanceService dataMaintenanceService,
+        IOperationCoordinator operationCoordinator)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -134,6 +137,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _fileSystemLauncher = fileSystemLauncher;
         _dialogService = dialogService;
         _dataMaintenanceService = dataMaintenanceService;
+        _operationCoordinator = operationCoordinator;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -200,6 +204,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         HistoryEntries = [];
         DiagnosticChecks = [];
         DiagnosticLogs = [];
+        OperationExecutions = [];
 
         _moduleCatalog = CreateModuleCatalog();
         _navigationService.SectionChanged += OnSectionChanged;
@@ -233,9 +238,30 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         ResetProjectRulesCommand = new RelayCommand(ResetProjectRules, () => SelectedProject is not null);
         SaveSettingsCommand = new RelayCommand(SaveSettings);
         ResetSettingsCommand = new RelayCommand(ResetSettings);
-        CreateDataBackupCommand = new RelayCommand(CreateDataBackup);
-        RestoreDataBackupCommand = new RelayCommand(RestoreDataBackup);
-        ChangeDataDirectoryCommand = new RelayCommand(ChangeDataDirectory);
+        CreateDataBackupCommand = new AsyncCommand(
+            CreateDataBackupAsync,
+            () => !IsDataOperationRunning,
+            exception => ReportDataMaintenanceFailure(
+                "Não foi possível preparar o backup",
+                exception),
+            TimeSpan.FromMinutes(6));
+        RestoreDataBackupCommand = new AsyncCommand(
+            RestoreDataBackupAsync,
+            () => !IsDataOperationRunning,
+            exception => ReportDataMaintenanceFailure(
+                "Não foi possível preparar a restauração",
+                exception),
+            TimeSpan.FromMinutes(6));
+        ChangeDataDirectoryCommand = new AsyncCommand(
+            ChangeDataDirectoryAsync,
+            () => !IsDataOperationRunning,
+            exception => ReportDataMaintenanceFailure(
+                "Não foi possível preparar a nova pasta de dados",
+                exception),
+            TimeSpan.FromMinutes(6));
+        CancelDataOperationCommand = new RelayCommand(
+            CancelDataOperation,
+            () => IsDataOperationRunning);
         RunProjectValidationCommand = new RelayCommand(
             RunProjectValidation,
             () => SelectedProject is not null);
@@ -254,6 +280,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         RefreshDiagnosticsCommand = new RelayCommand(RefreshDiagnostics);
 
         RefreshProjects(_activeProjectContext.ProjectId);
+        RefreshOperationExecutions();
         TryRecordActivity(
             "Sistema",
             "Aplicativo iniciado",
@@ -287,6 +314,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ObservableCollection<ActivityHistoryItemViewModel> HistoryEntries { get; }
     public ObservableCollection<DiagnosticCheckItemViewModel> DiagnosticChecks { get; }
     public ObservableCollection<DiagnosticLogItemViewModel> DiagnosticLogs { get; }
+    public ObservableCollection<OperationExecutionItemViewModel> OperationExecutions { get; }
     public ObservableCollection<ProjectListItemViewModel> Projects { get; }
     public ObservableCollection<ProjectListItemViewModel> AvailableProjects { get; }
     public ObservableCollection<ProjectListItemViewModel> ArchivedProjects { get; }
@@ -325,6 +353,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ICommand CreateDataBackupCommand { get; }
     public ICommand RestoreDataBackupCommand { get; }
     public ICommand ChangeDataDirectoryCommand { get; }
+    public ICommand CancelDataOperationCommand { get; }
     public ICommand RunProjectValidationCommand { get; }
     public ICommand GenerateProjectReportCommand { get; }
     public ICommand ExportProjectReportCommand { get; }

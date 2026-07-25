@@ -1,5 +1,7 @@
 using System.IO;
+using System.Windows;
 using AutoAIBuilder.Application.Diagnostics;
+using AutoAIBuilder.Application.Operations;
 
 namespace AutoAIBuilder.Desktop.ViewModels;
 
@@ -36,6 +38,7 @@ public sealed partial class MainWindowViewModel
             ReplaceItems(
                 DiagnosticLogs,
                 snapshot.RecentLogs.Select(DiagnosticLogItemViewModel.From));
+            RefreshOperationExecutions();
 
             DiagnosticGeneratedAt =
                 $"Verificado em {snapshot.GeneratedAt:dd/MM/yyyy HH:mm:ss}";
@@ -57,6 +60,38 @@ public sealed partial class MainWindowViewModel
             OnPropertyChanged(nameof(EmptyDiagnosticLogVisibility));
             StatusMessage = DiagnosticSummary;
         }
+    }
+
+    public Visibility EmptyOperationExecutionVisibility =>
+        OperationExecutions.Count == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    private void RefreshOperationExecutions()
+    {
+        try
+        {
+            ReplaceItems(
+                OperationExecutions,
+                _operationCoordinator
+                    .GetRecent(25)
+                    .Select(OperationExecutionItemViewModel.From));
+        }
+        catch (Exception exception) when (
+            exception is IOException
+                or UnauthorizedAccessException
+                or InvalidDataException
+                or InvalidOperationException)
+        {
+            OperationExecutions.Clear();
+            TryWriteDiagnostic(
+                DiagnosticLevel.Warning,
+                "OperationEngine",
+                "Não foi possível carregar o histórico operacional.",
+                exception);
+        }
+
+        OnPropertyChanged(nameof(EmptyOperationExecutionVisibility));
     }
 }
 
@@ -115,4 +150,54 @@ public sealed record DiagnosticLogItemViewModel(
             DiagnosticLevel.Error or DiagnosticLevel.Critical => "#FF5D68",
             _ => "#2C9BFF"
         });
+}
+
+public sealed record OperationExecutionItemViewModel(
+    string Date,
+    string Time,
+    string Name,
+    string Status,
+    int Progress,
+    string ProgressText,
+    string Detail,
+    string Accent)
+{
+    public static OperationExecutionItemViewModel From(
+        OperationExecution execution)
+    {
+        var status = execution.Status switch
+        {
+            OperationExecutionStatus.Pending => "Aguardando",
+            OperationExecutionStatus.Running => "Em execução",
+            OperationExecutionStatus.Succeeded => "Concluída",
+            OperationExecutionStatus.Cancelled => "Cancelada",
+            OperationExecutionStatus.TimedOut => "Tempo excedido",
+            OperationExecutionStatus.Failed => "Falhou",
+            OperationExecutionStatus.Interrupted => "Interrompida",
+            _ => execution.Status.ToString()
+        };
+        var accent = execution.Status switch
+        {
+            OperationExecutionStatus.Succeeded => "#36D17C",
+            OperationExecutionStatus.Pending
+                or OperationExecutionStatus.Running => "#2C9BFF",
+            OperationExecutionStatus.Cancelled
+                or OperationExecutionStatus.TimedOut
+                or OperationExecutionStatus.Interrupted => "#F8C33A",
+            _ => "#FF5D68"
+        };
+        var detail = string.IsNullOrWhiteSpace(execution.ErrorMessage)
+            ? execution.CurrentStep
+            : $"{execution.CurrentStep}: {execution.ErrorMessage}";
+
+        return new OperationExecutionItemViewModel(
+            execution.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy"),
+            execution.CreatedAt.ToLocalTime().ToString("HH:mm:ss"),
+            execution.DisplayName,
+            status,
+            execution.Progress,
+            $"{execution.Progress}%",
+            detail,
+            accent);
+    }
 }

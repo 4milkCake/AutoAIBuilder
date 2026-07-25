@@ -4,7 +4,7 @@ namespace AutoAIBuilder.Infrastructure.Persistence;
 
 public sealed class SqliteDatabase
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
     private const int CommandTimeoutSeconds = 30;
 
     private readonly string _connectionString;
@@ -69,6 +69,12 @@ public sealed class SqliteDatabase
             if (version == 0)
             {
                 ApplyVersion1(connection);
+                version = ReadSchemaVersion(connection);
+            }
+
+            if (version == 1)
+            {
+                ApplyVersion2(connection);
                 version = ReadSchemaVersion(connection);
             }
 
@@ -228,6 +234,53 @@ public sealed class SqliteDatabase
             VALUES (1, $appliedAt, 'Esquema SQLite inicial e migração dos JSON legados');
 
             PRAGMA user_version = 1;
+            """;
+        command.Parameters.AddWithValue(
+            "$appliedAt",
+            DateTimeOffset.UtcNow.ToString("O"));
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static void ApplyVersion2(SqliteConnection connection)
+    {
+        using var transaction = connection.BeginTransaction();
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText =
+            """
+            CREATE TABLE OperationExecutions (
+                Id TEXT NOT NULL PRIMARY KEY,
+                OperationType TEXT NOT NULL,
+                DisplayName TEXT NOT NULL,
+                ResourceKey TEXT NOT NULL,
+                ProjectId TEXT NULL,
+                Status INTEGER NOT NULL,
+                Progress INTEGER NOT NULL,
+                CurrentStep TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                StartedAt TEXT NULL,
+                CompletedAt TEXT NULL,
+                TimeoutSeconds INTEGER NOT NULL,
+                ErrorCode TEXT NULL,
+                ErrorMessage TEXT NULL,
+                UpdatedAt TEXT NOT NULL
+            );
+
+            CREATE INDEX IX_OperationExecutions_CreatedAt
+                ON OperationExecutions (CreatedAt DESC);
+
+            CREATE INDEX IX_OperationExecutions_Status
+                ON OperationExecutions (Status, UpdatedAt DESC);
+
+            INSERT INTO SchemaMigrations (Version, AppliedAt, Description)
+            VALUES (
+                2,
+                $appliedAt,
+                'Estado persistente do motor de operações assíncronas');
+
+            PRAGMA user_version = 2;
             """;
         command.Parameters.AddWithValue(
             "$appliedAt",

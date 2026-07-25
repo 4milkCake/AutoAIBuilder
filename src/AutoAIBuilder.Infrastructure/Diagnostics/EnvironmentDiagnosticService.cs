@@ -32,7 +32,7 @@ public sealed class EnvironmentDiagnosticService(
             CreatePathCheck("Dados locais", AppStoragePaths.DataDirectory),
             CreateSqliteCheck(database),
             CreatePathCheck("Backups de segurança", AppStoragePaths.BackupDirectory),
-            CreatePathCheck("Log estruturado", logger.StoragePath),
+            CreateDiagnosticLogCheck(logger),
             CreateLegacyJsonCheck("Projetos legados", AppStoragePaths.ProjectsFile),
             CreateLegacyJsonCheck("Configurações legadas", AppStoragePaths.SettingsFile),
             CreateLegacyJsonCheck("Histórico legado", AppStoragePaths.ActivityLogFile)
@@ -91,6 +91,40 @@ public sealed class EnvironmentDiagnosticService(
                 database.DatabasePath,
                 DiagnosticStatus.Error,
                 $"Não foi possível verificar o banco: {exception.Message}");
+        }
+    }
+
+    private static DiagnosticCheck CreateDiagnosticLogCheck(
+        IDiagnosticLogger logger)
+    {
+        if (logger is not JsonLinesDiagnosticLogger jsonLogger)
+        {
+            return CreatePathCheck("Log estruturado", logger.StoragePath);
+        }
+
+        try
+        {
+            var activeSize = File.Exists(jsonLogger.StoragePath)
+                ? new FileInfo(jsonLogger.StoragePath).Length
+                : 0;
+            var retention = jsonLogger.Retention;
+            return new DiagnosticCheck(
+                "Log estruturado e retenção",
+                jsonLogger.StoragePath,
+                DiagnosticStatus.Healthy,
+                $"{activeSize:N0} bytes no arquivo ativo; "
+                + $"{jsonLogger.ArchiveCount}/{retention.MaximumArchiveFiles} "
+                + "arquivo(s) anterior(es); rotação automática em "
+                + $"{retention.MaximumFileSizeBytes:N0} bytes.");
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            return new DiagnosticCheck(
+                "Log estruturado e retenção",
+                jsonLogger.StoragePath,
+                DiagnosticStatus.Warning,
+                $"Não foi possível consultar a retenção: {exception.Message}");
         }
     }
 

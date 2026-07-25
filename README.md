@@ -23,10 +23,10 @@ dotnet build AutoAIBuilder.sln --configuration Debug --no-restore
 dotnet test AutoAIBuilder.sln --configuration Debug --no-build --no-restore
 ```
 
-O arquivo `packages.lock.json` do projeto de testes é versionado. Assim, a
-restauração local e a integração contínua utilizam exatamente o mesmo grafo de
-dependências. O workflow `.github/workflows/ci.yml` repete a sequência de
-restauração, compilação e testes no Windows com o SDK definido em `global.json`.
+O `packages.lock.json` de cada projeto é versionado. Assim, a restauração local
+e a integração contínua utilizam exatamente o mesmo grafo de dependências. O
+workflow `.github/workflows/ci.yml` repete a sequência de restauração,
+compilação e testes no Windows com o SDK definido em `global.json`.
 
 ## Estado atual
 
@@ -37,6 +37,11 @@ do painel. Projetos, configurações, histórico e o projeto ativo são persisti
 no banco SQLite versionado
 `%LOCALAPPDATA%\AutoAIBuilder\Data\autoaibuilder.db`; arquivos são catalogados
 por metadados e permanecem em seus locais originais.
+
+O banco usa atualmente o esquema 2. Além dos dados funcionais, ele registra o
+estado das execuções operacionais, incluindo progresso, timeout, cancelamento,
+falha e conclusão. Execuções que estavam pendentes ou em andamento quando o
+processo foi encerrado são recuperadas como interrompidas no próximo início.
 
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma
@@ -78,6 +83,12 @@ cópia automática do estado anterior e escolher oficialmente outra pasta de
 dados. A realocação preserva o banco original, refaz a cópia final no próximo
 início e nunca reinicia o computador ou o aplicativo automaticamente.
 
+Essas operações de manutenção já usam o motor assíncrono do aplicativo. A
+interface permanece responsiva, mostra a etapa e o percentual, permite solicitar
+cancelamento, aplica timeout e impede que duas operações incompatíveis usem o
+banco ao mesmo tempo. Uma falha fica isolada na própria execução e não encerra o
+aplicativo.
+
 Somente uma instância do AutoAIBuilder pode permanecer aberta por sessão do
 Windows, evitando gravações concorrentes por duas janelas.
 
@@ -93,10 +104,13 @@ da janela principal, e os contratos de automação não dependem do WPF. Consult
 [a documentação de arquitetura](docs/architecture.md).
 
 A área Diagnóstico (`Ctrl+8`) apresenta runtime, sistema operacional, caminhos
-de persistência, integridade básica dos arquivos JSON e os eventos técnicos
-recentes. O log estruturado usa JSON Lines em
+de persistência, integridade do SQLite, execuções operacionais e os eventos
+técnicos recentes. O log estruturado usa JSON Lines em
 `%LOCALAPPDATA%\AutoAIBuilder\Logs\diagnostics.jsonl`; linhas isoladas
-corrompidas são ignoradas na leitura sem impedir a inicialização.
+corrompidas são ignoradas na leitura sem impedir a inicialização. O arquivo ativo
+é rotacionado ao atingir 2 MB, são preservados no máximo cinco arquivos
+anteriores, eventos excessivamente grandes são reduzidos e valores com nomes de
+credenciais, senhas, tokens ou chaves são removidos antes da gravação.
 
 Leitura e edição CAD, aplicação visual de máscaras e integrações reais de IA
 ainda não foram implementadas.

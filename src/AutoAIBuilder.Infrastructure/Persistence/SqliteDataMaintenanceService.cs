@@ -239,10 +239,11 @@ public sealed class SqliteDataMaintenanceService : IDataMaintenanceService
             }
         }
 
+        int version;
         using (var versionCommand = connection.CreateCommand())
         {
             versionCommand.CommandText = "PRAGMA user_version;";
-            var version = Convert.ToInt32(versionCommand.ExecuteScalar());
+            version = Convert.ToInt32(versionCommand.ExecuteScalar());
             if (version < 1 || version > SqliteDatabase.CurrentSchemaVersion)
             {
                 throw new InvalidDataException(
@@ -260,12 +261,14 @@ public sealed class SqliteDataMaintenanceService : IDataMaintenanceService
               AND name IN (
                   'Projects',
                   'ApplicationSettings',
-                  'ActivityLog',
-                  'AppState',
-                  'DataMigrations',
-                  'SchemaMigrations');
+                   'ActivityLog',
+                   'AppState',
+                   'DataMigrations',
+                   'SchemaMigrations',
+                   'OperationExecutions');
             """;
-        if (Convert.ToInt32(tables.ExecuteScalar()) != 6)
+        var expectedTableCount = version >= 2 ? 7 : 6;
+        if (Convert.ToInt32(tables.ExecuteScalar()) != expectedTableCount)
         {
             throw new InvalidDataException(
                 "O arquivo selecionado não contém o esquema completo do AutoAIBuilder.");

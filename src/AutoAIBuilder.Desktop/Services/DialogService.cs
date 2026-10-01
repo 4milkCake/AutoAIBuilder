@@ -89,4 +89,47 @@ public sealed class DialogService : IDialogService
 
         return result == MessageBoxResult.Yes;
     }
+
+    public bool ConfirmApplySemanticCorrection(
+        string sourcePoint,
+        int candidateCount)
+    {
+        var result = MessageBox.Show(
+            $"Aplicar a classificação revisada de {sourcePoint} a "
+            + $"{candidateCount} ponto(s) semelhante(s)?\n\n"
+            + "Uma revisão individual será registrada para cada ponto. "
+            + "O DWG e os CSVs não serão modificados, e a operação poderá "
+            + "ser desfeita ponto a ponto.",
+            "Confirmar correção por semelhança",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question,
+            MessageBoxResult.No);
+
+        return result == MessageBoxResult.Yes;
+    }
+
+    public bool ConfirmSupervisedAutomationExecution(
+        string sourceFile,
+        string historicalMask,
+        string outputRoot,
+        int expectedPoints)
+    {
+        var result = MessageBox.Show(
+            "Iniciar a execução supervisionada 11.6H.1?\n\n"
+            + $"Original protegido:\n{sourceFile}\n\n"
+            + $"Referência histórica:\n{historicalMask}\n\n"
+            + $"Destino isolado:\n{outputRoot}\n\n"
+            + $"Pontos esperados: {expectedPoints}\n\n"
+            + "O AutoCAD será executado somente sobre uma nova cópia técnica. "
+            + "O modo de preservação total não apaga entidades, blocos, "
+            + "layers ou referências. "
+            + "O DWG original e a referência serão conferidos por SHA-256 "
+            + "antes e depois da operação.",
+            "Confirmar execução supervisionada",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        return result == MessageBoxResult.Yes;
+    }
 }

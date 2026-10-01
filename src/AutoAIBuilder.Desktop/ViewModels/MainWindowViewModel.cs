@@ -6,8 +6,12 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using AutoAIBuilder.Application.Automation;
+using AutoAIBuilder.Application.Automation.Bridge;
+using AutoAIBuilder.Application.Automation.Preview;
+using AutoAIBuilder.Application.Automation.Supervised;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Pilots;
+using AutoAIBuilder.Application.CadVisualization;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -17,12 +21,16 @@ using AutoAIBuilder.Application.Notifications;
 using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Reports;
+using AutoAIBuilder.Application.Recognition;
 using AutoAIBuilder.Application.Settings;
+using AutoAIBuilder.Application.Semantics;
 using AutoAIBuilder.Application.Validation;
 using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels.Modules;
 using AutoAIBuilder.Domain.Automation;
 using AutoAIBuilder.Domain.Projects;
+using AutoAIBuilder.Domain.Recognition;
+using AutoAIBuilder.Domain.Semantics;
 
 namespace AutoAIBuilder.Desktop.ViewModels;
 
@@ -48,6 +56,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     private readonly IVerifiedCopyPilotService _verifiedCopyPilotService;
     private readonly IAutomationMaskCatalogService _automationMaskCatalogService;
     private readonly IAutomationOrchestrator _automationOrchestrator;
+    private readonly ILegacyAutomationBridgeService _legacyAutomationBridgeService;
+    private readonly IAutomationPreviewService _automationPreviewService;
+    private readonly ISupervisedAutomationService _supervisedAutomationService;
+    private readonly ISemanticWorkspaceService _semanticWorkspaceService;
+    private readonly ICadVisualizationService _cadVisualizationService;
+    private readonly ICadRecognitionService _cadRecognitionService;
     private readonly WorkspaceModuleCatalog _moduleCatalog;
     private readonly List<ProjectFileItemViewModel> _allProjectFiles = [];
     private readonly List<ActivityHistoryItemViewModel> _allHistoryEntries = [];
@@ -128,7 +142,13 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         IOperationCoordinator operationCoordinator,
         IVerifiedCopyPilotService verifiedCopyPilotService,
         IAutomationMaskCatalogService automationMaskCatalogService,
-        IAutomationOrchestrator automationOrchestrator)
+        IAutomationOrchestrator automationOrchestrator,
+        ILegacyAutomationBridgeService legacyAutomationBridgeService,
+        IAutomationPreviewService automationPreviewService,
+        ISupervisedAutomationService supervisedAutomationService,
+        ISemanticWorkspaceService semanticWorkspaceService,
+        ICadVisualizationService cadVisualizationService,
+        ICadRecognitionService cadRecognitionService)
     {
         _dashboardProvider = dashboardProvider;
         _workspaceService = workspaceService;
@@ -150,6 +170,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         _verifiedCopyPilotService = verifiedCopyPilotService;
         _automationMaskCatalogService = automationMaskCatalogService;
         _automationOrchestrator = automationOrchestrator;
+        _legacyAutomationBridgeService = legacyAutomationBridgeService;
+        _automationPreviewService = automationPreviewService;
+        _supervisedAutomationService = supervisedAutomationService;
+        _semanticWorkspaceService = semanticWorkspaceService;
+        _cadVisualizationService = cadVisualizationService;
+        _cadRecognitionService = cadRecognitionService;
         _currentSection = navigationService.CurrentSection;
         _applicationSettings = _settingsService.Load();
         LoadSettingsEditor(_applicationSettings);
@@ -160,7 +186,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             new(WorkspaceSection.Dashboard, "▦", "Painel principal", true, null, "Ctrl+1"),
             new(WorkspaceSection.Projects, "▤", "Projetos", false, null, "Ctrl+2"),
             new(WorkspaceSection.Files, "□", "Arquivos", false, null, "Ctrl+3"),
+            new(WorkspaceSection.SemanticReview, "◎", "Análise semântica", false, "11.6E.1"),
+            new(WorkspaceSection.Recognition, "⌖", "Reconhecer novo DWG", false, "11.6I"),
             new(WorkspaceSection.Masks, "◫", "Máscaras", false, "Catálogo"),
+            new(WorkspaceSection.AutomationBridge, "⇄", "Ponte AutoLISP", false, "11.6F"),
+            new(WorkspaceSection.AutomationPreview, "◉", "Prévia da automação", false, "11.6G"),
+            new(WorkspaceSection.AutomationSupervised, "▶", "Execução supervisionada", false, "11.6H.1"),
             new(WorkspaceSection.Automation, "⌘", "Automação", false, "Piloto", "Ctrl+9"),
             new(null, "✦", "Agentes IA", false, null),
             new(null, "▥", "Bibliotecas", false, null),
@@ -200,10 +231,20 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             "Regras",
             "Validação",
             "Relatórios",
+            "Análise semântica",
             "Máscaras",
             "Automação",
             "Configurações",
             "Sistema"
+        ];
+
+        SemanticFilterOptions =
+        [
+            "Todos os pontos",
+            "Elétricos",
+            "Hidráulicos",
+            "Precisam de revisão",
+            "Aprovados"
         ];
 
         Projects = [];
@@ -219,6 +260,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         DiagnosticChecks = [];
         DiagnosticLogs = [];
         OperationExecutions = [];
+        SemanticPoints = [];
+        SemanticMapPoints = [];
 
         _moduleCatalog = CreateModuleCatalog();
         _navigationService.SectionChanged += OnSectionChanged;
@@ -228,8 +271,18 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         OpenDashboardCommand = new RelayCommand(() => Navigate(WorkspaceSection.Dashboard));
         OpenProjectsCommand = new RelayCommand(() => Navigate(WorkspaceSection.Projects));
         OpenFilesCommand = new RelayCommand(() => Navigate(WorkspaceSection.Files));
+        OpenSemanticReviewCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.SemanticReview));
+        OpenRecognitionCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.Recognition));
         OpenMasksCommand = new RelayCommand(
             () => Navigate(WorkspaceSection.Masks));
+        OpenAutomationBridgeCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.AutomationBridge));
+        OpenAutomationPreviewCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.AutomationPreview));
+        OpenSupervisedAutomationCommand = new RelayCommand(
+            () => Navigate(WorkspaceSection.AutomationSupervised));
         OpenAutomationCommand = new RelayCommand(
             () => Navigate(WorkspaceSection.Automation));
         OpenProjectRulesCommand = new RelayCommand(() => Navigate(WorkspaceSection.ProjectRules));
@@ -296,6 +349,103 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             ExportProjectReportPdf,
             () => _currentReport is not null);
         RefreshDiagnosticsCommand = new RelayCommand(RefreshDiagnostics);
+        ImportSemanticCsvCommand = new AsyncCommand(
+            ImportSemanticCsvAsync,
+            () => SelectedProject is not null && !IsSemanticImportRunning,
+            ReportSemanticImportFailure,
+            TimeSpan.FromMinutes(2));
+        ApproveSemanticPointCommand =
+            new RelayCommand<SemanticPointItemViewModel>(
+                point => UpdateSemanticPointReview(
+                    point,
+                    SemanticReviewStatus.Approved),
+                point => point is not null && SelectedProject is not null);
+        ReviewSemanticPointCommand =
+            new RelayCommand<SemanticPointItemViewModel>(
+                point => UpdateSemanticPointReview(
+                    point,
+                    SemanticReviewStatus.NeedsReview),
+                point => point is not null && SelectedProject is not null);
+        SaveSemanticCorrectionCommand = new RelayCommand(
+            SaveSemanticCorrection,
+            () => SelectedProject is not null
+                  && SelectedSemanticPoint is not null);
+        FindSimilarSemanticPointsCommand = new RelayCommand(
+            FindSimilarSemanticPoints,
+            () => SelectedProject is not null
+                  && SelectedSemanticPoint is not null);
+        ApplySemanticCorrectionToSimilarCommand = new RelayCommand(
+            ApplySemanticCorrectionToSimilar,
+            () => SelectedProject is not null
+                  && SelectedSemanticPoint is not null
+                  && SemanticSimilarPoints.Count > 0);
+        UndoSemanticPointRevisionCommand = new RelayCommand(
+            UndoSelectedSemanticPointRevision,
+            () => SelectedProject is not null
+                  && SelectedSemanticPoint is not null);
+        SelectSemanticIssueCommand =
+            new RelayCommand<SemanticReviewIssueItemViewModel>(
+                SelectSemanticIssue,
+                issue => issue is not null);
+        SelectSemanticMapPointCommand =
+            new RelayCommand<SemanticMapPointItemViewModel>(
+                SelectSemanticMapPoint,
+                point => point is not null);
+        GenerateCadVisualizationCommand = new AsyncCommand(
+            GenerateCadVisualizationAsync,
+            () => SelectedProject is not null
+                  && _semanticSnapshot.Dataset is not null
+                  && !IsCadVisualizationRunning,
+            ReportCadVisualizationFailure,
+            TimeSpan.FromMinutes(4));
+        ChooseRecognitionDwgCommand = new RelayCommand(
+            ChooseRecognitionDwg,
+            () => SelectedProject is not null && !IsRecognitionRunning);
+        AnalyzeRecognitionCommand = new AsyncCommand(
+            AnalyzeRecognitionAsync,
+            CanAnalyzeRecognition,
+            ReportRecognitionFailure,
+            TimeSpan.FromMinutes(4));
+        ApproveRecognitionCandidateCommand =
+            new RelayCommand<RecognitionCandidateItemViewModel>(
+                candidate => ReviewRecognitionCandidate(
+                    candidate,
+                    RecognitionCandidateStatus.Approved),
+                candidate => candidate is not null && !IsRecognitionRunning);
+        RejectRecognitionCandidateCommand =
+            new RelayCommand<RecognitionCandidateItemViewModel>(
+                candidate => ReviewRecognitionCandidate(
+                    candidate,
+                    RecognitionCandidateStatus.Rejected),
+                candidate => candidate is not null && !IsRecognitionRunning);
+        SaveRecognitionCorrectionCommand = new RelayCommand(
+            SaveRecognitionCorrection,
+            () => SelectedRecognitionCandidate is not null
+                  && !IsRecognitionRunning);
+        OpenRecognitionRunCommand = new RelayCommand(
+            OpenRecognitionRun,
+            () => _recognitionSession is not null);
+        InitializeRecognitionCommands();
+        SelectCadOverlayPointCommand =
+            new RelayCommand<CadOverlayPointViewModel>(
+                SelectCadOverlayPoint,
+                point => point is not null);
+        ShowAllCadLayersCommand = new RelayCommand(
+            () => SetCadLayerVisibility(true));
+        HideAllCadLayersCommand = new RelayCommand(
+            () => SetCadLayerVisibility(false));
+        ApproveSemanticDirectionCommand = new RelayCommand(
+            () => SaveSemanticDirection(SemanticReviewStatus.Approved),
+            () => SelectedProject is not null
+                  && SelectedSemanticDirection is not null);
+        CorrectSemanticDirectionCommand = new RelayCommand(
+            () => SaveSemanticDirection(SemanticReviewStatus.Corrected),
+            () => SelectedProject is not null
+                  && SelectedSemanticDirection is not null);
+        UndoSemanticDirectionRevisionCommand = new RelayCommand(
+            UndoSelectedSemanticDirectionRevision,
+            () => SelectedProject is not null
+                  && SelectedSemanticDirection is not null);
         ChooseMaskContractCommand = new RelayCommand(
             ChooseMaskContract,
             () => !IsMaskCatalogBusy);
@@ -343,6 +493,46 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         OpenAutomationOutputCommand = new RelayCommand(
             OpenAutomationOutput,
             () => !string.IsNullOrWhiteSpace(AutomationPublishedPath));
+        ChooseAutoLispDirectoryCommand = new RelayCommand(
+            ChooseAutoLispDirectory);
+        AnalyzeAutomationBridgeCommand = new RelayCommand(
+            RefreshAutomationBridge);
+        RefreshAutomationPreviewCommand = new RelayCommand(
+            RefreshAutomationPreview);
+        ApproveAutomationPreviewGroupCommand =
+            new RelayCommand<AutomationPreviewGroupItemViewModel>(
+                group => DecideAutomationPreviewGroup(
+                    group,
+                    AutomationPreviewDecisionStatus.Approved),
+                group => group?.CanDecide == true);
+        RejectAutomationPreviewGroupCommand =
+            new RelayCommand<AutomationPreviewGroupItemViewModel>(
+                group => DecideAutomationPreviewGroup(
+                    group,
+                    AutomationPreviewDecisionStatus.Rejected),
+                group => group?.CanDecide == true);
+        InspectSupervisedAutomationCommand = new RelayCommand(
+            RefreshSupervisedAutomation);
+        ChooseSupervisedSourceDwgCommand = new RelayCommand(
+            ChooseSupervisedSourceDwg);
+        ChooseSupervisedHistoricalMaskCommand = new RelayCommand(
+            ChooseSupervisedHistoricalMask);
+        ChooseSupervisedHistoricalPointsCommand = new RelayCommand(
+            ChooseSupervisedHistoricalPoints);
+        ChooseSupervisedLegendObjectsCommand = new RelayCommand(
+            ChooseSupervisedLegendObjects);
+        ChooseSupervisedScriptsCommand = new RelayCommand(
+            ChooseSupervisedScripts);
+        ChooseSupervisedOutputCommand = new RelayCommand(
+            ChooseSupervisedOutput);
+        ExecuteSupervisedAutomationCommand = new AsyncCommand(
+            ExecuteSupervisedAutomationAsync,
+            CanExecuteSupervisedAutomation,
+            ReportSupervisedAutomationFailure,
+            TimeSpan.FromMinutes(10));
+        OpenSupervisedRunCommand = new RelayCommand(
+            OpenSupervisedRun,
+            () => _supervisedResult is not null);
 
         RefreshProjects(_activeProjectContext.ProjectId);
         RefreshOperationExecutions();
@@ -391,7 +581,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public ICommand OpenDashboardCommand { get; }
     public ICommand OpenProjectsCommand { get; }
     public ICommand OpenFilesCommand { get; }
+    public ICommand OpenSemanticReviewCommand { get; }
+    public ICommand OpenRecognitionCommand { get; }
     public ICommand OpenMasksCommand { get; }
+    public ICommand OpenAutomationBridgeCommand { get; }
+    public ICommand OpenAutomationPreviewCommand { get; }
+    public ICommand OpenSupervisedAutomationCommand { get; }
     public ICommand OpenAutomationCommand { get; }
     public ICommand OpenProjectRulesCommand { get; }
     public ICommand OpenValidatorsCommand { get; }
@@ -473,8 +668,33 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
     public Visibility FilesVisibility =>
         CurrentSection == WorkspaceSection.Files ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility SemanticReviewVisibility =>
+        CurrentSection == WorkspaceSection.SemanticReview
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility RecognitionVisibility =>
+        CurrentSection == WorkspaceSection.Recognition
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     public Visibility MasksVisibility =>
         CurrentSection == WorkspaceSection.Masks
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility AutomationBridgeVisibility =>
+        CurrentSection == WorkspaceSection.AutomationBridge
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility AutomationPreviewVisibility =>
+        CurrentSection == WorkspaceSection.AutomationPreview
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility AutomationSupervisedVisibility =>
+        CurrentSection == WorkspaceSection.AutomationSupervised
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -528,7 +748,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(DashboardVisibility));
             OnPropertyChanged(nameof(ProjectsVisibility));
             OnPropertyChanged(nameof(FilesVisibility));
+            OnPropertyChanged(nameof(SemanticReviewVisibility));
+            OnPropertyChanged(nameof(RecognitionVisibility));
             OnPropertyChanged(nameof(MasksVisibility));
+            OnPropertyChanged(nameof(AutomationBridgeVisibility));
+            OnPropertyChanged(nameof(AutomationPreviewVisibility));
+            OnPropertyChanged(nameof(AutomationSupervisedVisibility));
             OnPropertyChanged(nameof(AutomationVisibility));
             OnPropertyChanged(nameof(ProjectRulesVisibility));
             OnPropertyChanged(nameof(SettingsVisibility));
@@ -565,6 +790,19 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(SelectedProjectTitle));
             OnPropertyChanged(nameof(HasSelectedProject));
             RefreshProjectFiles();
+            RefreshSemanticReview();
+            if (CurrentSection == WorkspaceSection.AutomationBridge)
+            {
+                RefreshAutomationBridge();
+            }
+            else if (CurrentSection == WorkspaceSection.AutomationPreview)
+            {
+                RefreshAutomationPreview();
+            }
+            else if (CurrentSection == WorkspaceSection.AutomationSupervised)
+            {
+                RefreshSupervisedAutomation();
+            }
             RefreshAutomationPilotFiles();
             LoadProjectRules();
             RefreshActiveProject();
@@ -578,6 +816,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
             (ResetProjectRulesCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (RunProjectValidationCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (GenerateProjectReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ImportSemanticCsvCommand as AsyncCommand)?.RaiseCanExecuteChanged();
 
             if (CurrentSection == WorkspaceSection.Validators)
             {

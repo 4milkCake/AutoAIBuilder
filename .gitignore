@@ -15,3 +15,53 @@ artifacts/
 *.trx
 coverage*.xml
 coverage*.json
+
+# Temporary work, Python and auxiliary scripts
+.tmp*/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+node_modules/
+*.tmp
+*.temp
+
+# Local secrets and machine settings (templates remain versioned)
+.env
+.env.*
+!.env.example
+!.env.template
+appsettings.Local.json
+appsettings.*.local.json
+*.pfx
+*.p12
+*.pem
+*.key
+secrets.json
+
+# CAD originals, client datasets and generated backups
+*.dwg
+*.dxf
+*.dwl
+*.dwl2
+*.bak
+*.ac$
+*.sv$
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Compiled and packaged output; source and documentation stay versioned
+*.dll
+*.exe
+*.pdb
+*.msi
+*.nupkg
+*.snupkg
+*.zip
+*.7z
+*.rar
+*.bundle

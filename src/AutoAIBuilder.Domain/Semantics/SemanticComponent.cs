@@ -1,0 +1,26 @@
+namespace AutoAIBuilder.Domain.Semantics;
+
+public sealed record SemanticComponent(
+    Guid Id,
+    Guid DatasetId,
+    string ExternalId,
+    string Handle,
+    string PointExternalId,
+    string PointHandle,
+    SemanticDiscipline Discipline,
+    string PointCode,
+    string SemanticLayer,
+    string ComponentClass,
+    string SourceCategory,
+    string ObjectType,
+    string BlockName,
+    string TextContent,
+    double AssociationDistance,
+    SemanticConfidence AssociationConfidence,
+    double ReferenceX,
+    double ReferenceY,
+    double ReferenceZ,
+    double CenterX,
+    double CenterY,
+    double CenterZ,
+    double RotationDegrees);

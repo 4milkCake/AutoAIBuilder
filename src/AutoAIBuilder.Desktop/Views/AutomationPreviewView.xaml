@@ -1,0 +1,462 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.AutomationPreviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AutoAIBuilder.Desktop.Controls"
+             AutomationProperties.Name="Pré-visualização supervisionada da automação">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16,12"
+                Background="#0D1D30"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Marco 11.6G — Pré-visualização da automação"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="Compare o original com a proposta, decida por grupos e preserve uma trilha auditável."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="9" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <Border Padding="11,5"
+                            Background="#2D2510"
+                            BorderBrush="#6F5B1E"
+                            BorderThickness="1"
+                            CornerRadius="13">
+                        <TextBlock Text="EXECUÇÃO CAD BLOQUEADA"
+                                   Foreground="#FFD56A"
+                                   FontSize="8"
+                                   FontWeight="SemiBold" />
+                    </Border>
+                    <Button Margin="8,0,0,0"
+                            Content="Gerar planta com AutoCAD"
+                            Command="{Binding GenerateCadVisualizationCommand}"
+                            Style="{DynamicResource PrimaryButtonStyle}" />
+                    <Button Margin="8,0,0,0"
+                            Content="Atualizar prévia"
+                            Command="{Binding RefreshAutomationPreviewCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="310" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Padding="12"
+                        Style="{DynamicResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Grupos da proposta"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding AutomationPreviewSummary}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="8" />
+                        <Border Margin="0,8,0,0"
+                                Padding="9,6"
+                                Background="#091523"
+                                BorderBrush="{Binding AutomationPreviewStatusAccent}"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <TextBlock Text="{Binding AutomationPreviewStatus}"
+                                       Foreground="{Binding AutomationPreviewStatusAccent}"
+                                       FontSize="9"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <ListBox Grid.Row="1"
+                         Margin="0,8,0,0"
+                         ItemsSource="{Binding AutomationPreviewGroups}"
+                         SelectedItem="{Binding SelectedAutomationPreviewGroup}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment"
+                                    Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,7" />
+                            <Setter Property="Background" Value="Transparent" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="11"
+                                    Background="#0D1929"
+                                    BorderBrush="{Binding Accent}"
+                                    BorderThickness="1"
+                                    CornerRadius="7">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Category}"
+                                                   Foreground="{Binding Accent}"
+                                                   FontSize="8"
+                                                   FontWeight="Bold" />
+                                        <Border Grid.Column="1"
+                                                Padding="7,3"
+                                                Background="#091523"
+                                                BorderBrush="{Binding DecisionAccent}"
+                                                BorderThickness="1"
+                                                CornerRadius="9">
+                                            <TextBlock Text="{Binding Decision}"
+                                                       Foreground="{Binding DecisionAccent}"
+                                                       FontSize="7"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="{Binding Name}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,3,0,0"
+                                               Text="{Binding Description}"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="{Binding ItemCount, StringFormat={}{0} item(ns)}"
+                                               Foreground="{Binding Accent}"
+                                               FontSize="9"
+                                               FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Comparação gráfica"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,3,0,0"
+                                   Text="{Binding AutomationPreviewSelectionSummary}"
+                                   Foreground="#8DD0FF"
+                                   FontSize="8" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal">
+                        <Button Content="Ajustar"
+                                Click="Fit_Click"
+                                Style="{DynamicResource SecondaryButtonStyle}" />
+                        <Button Margin="6,0,0,0"
+                                Content="Mostrar tudo"
+                                Click="FitAll_Click"
+                                Style="{DynamicResource SecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1"
+                      Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="#050E18"
+                            BorderBrush="#52647A"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            ClipToBounds="True">
+                        <Grid>
+                            <controls:CadViewportControl x:Name="BeforeViewport"
+                                                         Snapshot="{Binding CadVisualization}"
+                                                         Layers="{Binding CadLayers}"
+                                                         ToolTip="Antes: planta original sem sobreposições" />
+                            <Border Padding="9,5"
+                                    Margin="8"
+                                    Background="#CC091523"
+                                    BorderBrush="#52647A"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top">
+                                <StackPanel>
+                                    <TextBlock Text="ANTES"
+                                               Foreground="#B8C5D6"
+                                               FontSize="9"
+                                               FontWeight="Bold" />
+                                    <TextBlock Text="Original preservado"
+                                               Foreground="#8292A8"
+                                               FontSize="7" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Background="#050E18"
+                            BorderBrush="#2C9BFF"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            ClipToBounds="True">
+                        <Grid>
+                            <controls:CadViewportControl x:Name="AfterViewport"
+                                                         Snapshot="{Binding CadVisualization}"
+                                                         OverlayPoints="{Binding AutomationPreviewOverlayPoints}"
+                                                         Layers="{Binding CadLayers}"
+                                                         ToolTip="Depois: proposta visual sem aplicação no DWG" />
+                            <Border Padding="9,5"
+                                    Margin="8"
+                                    Background="#CC091523"
+                                    BorderBrush="#2C9BFF"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top">
+                                <StackPanel>
+                                    <TextBlock Text="DEPOIS — PRÉVIA"
+                                               Foreground="#8DD0FF"
+                                               FontSize="9"
+                                               FontWeight="Bold" />
+                                    <TextBlock Text="Nenhuma alteração aplicada"
+                                               Foreground="#6E9FC4"
+                                               FontSize="7" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Padding="10,7"
+                        Background="#091523"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding AutomationPreviewBeforeSummary}"
+                                   Foreground="#AAB8CA"
+                                   FontSize="8" />
+                        <TextBlock Grid.Column="1"
+                                   Margin="12,0,0,0"
+                                   Text="{Binding AutomationPreviewAfterSummary}"
+                                   Foreground="#8DD0FF"
+                                   FontSize="8" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <ScrollViewer Grid.Column="4"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="12"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Decisão do grupo"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SelectedAutomationPreviewGroup.Name, TargetNullValue=Selecione um grupo}"
+                                       Foreground="#8DD0FF"
+                                       FontSize="10"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SelectedAutomationPreviewGroup.IntendedEffect, TargetNullValue=Os detalhes aparecerão aqui.}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding SelectedAutomationPreviewGroup.Source, StringFormat=Origem: {0}}"
+                                       Foreground="#6D829C"
+                                       FontSize="7" />
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding SelectedAutomationPreviewGroup.FutureEffect}"
+                                       Foreground="#F8C33A"
+                                       FontSize="8"
+                                       FontWeight="SemiBold" />
+                            <TextBox Margin="0,9,0,0"
+                                     MinHeight="54"
+                                     Padding="8,6"
+                                     Text="{Binding AutomationPreviewDecisionNote, UpdateSourceTrigger=PropertyChanged}"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     Background="#07111E"
+                                     Foreground="#E7EEF8"
+                                     BorderBrush="#31577B"
+                                     ToolTip="Observação opcional para a auditoria"
+                                     AutomationProperties.Name="Observação da decisão" />
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="7" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Content="Aprovar grupo"
+                                        Command="{Binding ApproveAutomationPreviewGroupCommand}"
+                                        CommandParameter="{Binding SelectedAutomationPreviewGroup}"
+                                        Style="{DynamicResource PrimaryButtonStyle}" />
+                                <Button Grid.Column="2"
+                                        Content="Rejeitar"
+                                        Command="{Binding RejectAutomationPreviewGroupCommand}"
+                                        CommandParameter="{Binding SelectedAutomationPreviewGroup}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,8,0,0"
+                            Padding="12"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Fechamento do plano"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <UniformGrid Margin="0,9,0,0"
+                                         Columns="3">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding AutomationPreviewApprovedCount}"
+                                               Foreground="#36D17C"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="aprovados"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="7" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding AutomationPreviewRejectedCount}"
+                                               Foreground="#FF5D68"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="rejeitados"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="7" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding AutomationPreviewPendingCount}"
+                                               Foreground="#F8C33A"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="pendentes"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="7" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <Border Margin="0,9,0,0"
+                                    Padding="9,6"
+                                    Background="#091523"
+                                    BorderBrush="{Binding AutomationPreviewReadinessAccent}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding AutomationPreviewReadiness}"
+                                           Foreground="{Binding AutomationPreviewReadinessAccent}"
+                                           FontSize="8"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding AutomationPreviewIntegrity}"
+                                       Foreground="{Binding AutomationPreviewIntegrityAccent}"
+                                       FontSize="8"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Text="{Binding AutomationPreviewPlanId, StringFormat=Plano: {0}}"
+                                       Foreground="#627087"
+                                       FontFamily="Consolas"
+                                       FontSize="7" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="{Binding AutomationPreviewSafety}"
+                                       Foreground="#F8C33A"
+                                       FontSize="8" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,8,0,0"
+                            Padding="12"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Auditoria de decisões"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <ItemsControl Margin="0,8,0,0"
+                                          ItemsSource="{Binding AutomationPreviewAudit}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,6"
+                                                Padding="9,7"
+                                                Background="#091523"
+                                                BorderBrush="{Binding Accent}"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Group}"
+                                                               FontSize="8"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Decision}"
+                                                               Foreground="{Binding Accent}"
+                                                               FontSize="7"
+                                                               FontWeight="Bold" />
+                                                </Grid>
+                                                <TextBlock Margin="0,3,0,0"
+                                                           Text="{Binding Note}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="7" />
+                                                <TextBlock Margin="0,2,0,0"
+                                                           Text="{Binding DecidedAt}"
+                                                           Foreground="#52647A"
+                                                           FontSize="7" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

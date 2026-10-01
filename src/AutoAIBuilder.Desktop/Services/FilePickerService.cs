@@ -20,6 +20,37 @@ public sealed class FilePickerService : IFilePickerService
             : [];
     }
 
+    public IReadOnlyList<string> PickSemanticCsvFiles()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar CSVs semânticos v07/v081",
+            CheckFileExists = true,
+            Multiselect = true,
+            DefaultExt = ".csv",
+            Filter = "Relatórios semânticos CSV|*.csv"
+        };
+
+        return dialog.ShowDialog() == true
+            ? dialog.FileNames
+            : [];
+    }
+
+    public string? PickRecognitionDwg(string? currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar novo DWG para reconhecimento supervisionado",
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".dwg",
+            Filter = "Desenho AutoCAD|*.dwg",
+            InitialDirectory = GetExistingDirectory(currentPath)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
     public string? PickAutomationMaskContract()
     {
         var dialog = new OpenFileDialog
@@ -70,6 +101,69 @@ public sealed class FilePickerService : IFilePickerService
             : null;
     }
 
+    public string? PickAutoLispDirectory(string? currentDirectory)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Selecionar pasta das rotinas AutoLISP",
+            Multiselect = false,
+            InitialDirectory =
+                !string.IsNullOrWhiteSpace(currentDirectory)
+                && Directory.Exists(currentDirectory)
+                    ? currentDirectory
+                    : null
+        };
+
+        return dialog.ShowDialog() == true
+            ? dialog.FolderName
+            : null;
+    }
+
+    public string? PickSupervisedHistoricalMask(string? currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar máscara histórica validada",
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".dwg",
+            Filter = "Desenho AutoCAD|*.dwg",
+            InitialDirectory = GetExistingDirectory(currentPath)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? PickSupervisedSourceDwg(string? currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar DWG original de entrada",
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".dwg",
+            Filter = "Desenho AutoCAD|*.dwg",
+            InitialDirectory = GetExistingDirectory(currentPath)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? PickSupervisedCsv(string title, string? currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = title,
+            CheckFileExists = true,
+            Multiselect = false,
+            DefaultExt = ".csv",
+            Filter = "Relatório CSV|*.csv",
+            InitialDirectory = GetExistingDirectory(currentPath)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
     public string? PickDataBackupDestination(string suggestedFileName)
     {
         var dialog = new SaveFileDialog
@@ -115,6 +209,24 @@ public sealed class FilePickerService : IFilePickerService
 
         return dialog.ShowDialog() == true
             ? dialog.FolderName
+            : null;
+    }
+
+    private static string? GetExistingDirectory(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        if (Directory.Exists(path))
+        {
+            return path;
+        }
+
+        var directory = Path.GetDirectoryName(path);
+        return directory is not null && Directory.Exists(directory)
+            ? directory
             : null;
     }
 }

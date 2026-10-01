@@ -1,0 +1,5 @@
+interface:
+  display_name: "Lançar ponto elétrico no Builder"
+  short_description: "Lançar um ponto elétrico supervisionado"
+  default_prompt: "Use $lancar-ponto-eletrico-builder para planejar e lançar um único ponto elétrico supervisionado no Builder."
+

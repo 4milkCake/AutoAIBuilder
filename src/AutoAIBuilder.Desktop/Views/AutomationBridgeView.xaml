@@ -1,0 +1,429 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.AutomationBridgeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.Name="Ponte segura com automação AutoLISP">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16,13"
+                Background="#0D1D30"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Marco 11.6F — Ponte com a automação existente"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="Inventário AutoLISP → contratos seguros → simulação de identificação e máscara."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="10" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Padding="12,6"
+                        Background="#163125"
+                        BorderBrush="#27734B"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="SOMENTE ANÁLISE • DWG INTACTO"
+                               Foreground="#6EE7A2"
+                               FontSize="9"
+                               FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="330" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="390" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Fonte histórica"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="Os arquivos são lidos diretamente na pasta original. Nenhuma cópia ou conversão é criada."
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <Border Margin="0,10,0,0"
+                                    Padding="9,7"
+                                    Background="#091523"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding AutoLispDirectoryDisplay}"
+                                           ToolTip="{Binding AutoLispDirectory}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                            </Border>
+                            <Button Margin="0,9,0,0"
+                                    Content="Selecionar pasta AutoLISP"
+                                    Command="{Binding ChooseAutoLispDirectoryCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                            <Button Margin="0,7,0,0"
+                                    Content="Analisar e simular novamente"
+                                    Command="{Binding AnalyzeAutomationBridgeCommand}"
+                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Estado da ponte"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <Border Margin="0,9,0,0"
+                                    Padding="10,7"
+                                    Background="#091523"
+                                    BorderBrush="{Binding AutomationBridgeStatusAccent}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <TextBlock Text="{Binding AutomationBridgeStatus}"
+                                           Foreground="{Binding AutomationBridgeStatusAccent}"
+                                           FontWeight="SemiBold"
+                                           FontSize="10" />
+                            </Border>
+                            <TextBlock Margin="0,9,0,0"
+                                       Text="{Binding AutomationBridgeSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding AutomationBridgeSafety}"
+                                       Foreground="#8DD0FF"
+                                       FontSize="9" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding AutomationBridgeIntegrityText}"
+                                       Foreground="{Binding AutomationBridgeIntegrityAccent}"
+                                       FontSize="10"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Text="{Binding AutomationBridgeAnalyzedAt, StringFormat=Analisado em {0}}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Base usada na simulação"
+                                       FontSize="14"
+                                       FontWeight="SemiBold" />
+                            <UniformGrid Margin="0,10,0,0"
+                                         Columns="2">
+                                <StackPanel Margin="0,0,8,10">
+                                    <TextBlock Text="{Binding AutomationBridgePointCount}"
+                                               FontSize="22"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="pontos"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding AutomationBridgeComponentCount}"
+                                               FontSize="22"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="componentes"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,8,10">
+                                    <TextBlock Text="{Binding AutomationBridgeElectricalCount}"
+                                               Foreground="#57B7FF"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="elétricos"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding AutomationBridgeHydraulicCount}"
+                                               Foreground="#42D9C8"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="hidráulicos"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding AutomationBridgeLayerCount}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="camadas"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding AutomationBridgeDirectionCount}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="direções"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="9" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Rotinas catalogadas"
+                                   FontSize="15"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="9">
+                            <Run Text="{Binding AutomationBridgeRoutineCount, Mode=OneWay}" />
+                            <Run Text=" arquivos • " />
+                            <Run Text="{Binding AutomationBridgeBlockedCount, Mode=OneWay}" />
+                            <Run Text=" etapas de alteração bloqueadas" />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+                <ListBox Grid.Row="1"
+                         Margin="0,9,0,0"
+                         ItemsSource="{Binding AutomationBridgeRoutines}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment"
+                                    Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,8" />
+                            <Setter Property="Background" Value="Transparent" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="12"
+                                    Style="{DynamicResource CardStyle}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding FileName}"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8">
+                                                <Run Text="{Binding Version, Mode=OneWay}" />
+                                                <Run Text=" • " />
+                                                <Run Text="{Binding Stage, Mode=OneWay}" />
+                                                <Run Text=" • " />
+                                                <Run Text="{Binding Size, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Border Grid.Column="1"
+                                                Padding="8,4"
+                                                Background="#091523"
+                                                BorderBrush="{Binding SafetyAccent}"
+                                                BorderThickness="1"
+                                                CornerRadius="10">
+                                            <TextBlock Text="{Binding Safety}"
+                                                       Foreground="{Binding SafetyAccent}"
+                                                       FontSize="8"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="{Binding Commands}"
+                                               Foreground="#8DD0FF"
+                                               FontSize="8" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding SafetyReason}"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,8,0">
+                                            <TextBlock Text="ENTRADAS"
+                                                       Foreground="#627087"
+                                                       FontSize="7"
+                                                       FontWeight="Bold" />
+                                            <TextBlock Text="{Binding Inputs}"
+                                                       FontSize="8" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="SAÍDAS"
+                                                       Foreground="#627087"
+                                                       FontSize="7"
+                                                       FontWeight="Bold" />
+                                            <TextBlock Text="{Binding Outputs}"
+                                                       FontSize="8" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Margin="0,7,0,0"
+                                               Text="{Binding Dependencies, StringFormat=Depende de: {0}}"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Margin="0,3,0,0"
+                                               Text="{Binding ContractId, StringFormat=Contrato: {0}}"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Margin="0,3,0,0"
+                                               Text="{Binding Sha256, StringFormat=SHA-256: {0}}"
+                                               Foreground="#52647A"
+                                               FontFamily="Consolas"
+                                               FontSize="7"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Sha256}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <ScrollViewer Grid.Column="4"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Contratos seguros"
+                               FontSize="15"
+                               FontWeight="SemiBold" />
+                    <ItemsControl Margin="0,9,0,0"
+                                  ItemsSource="{Binding AutomationBridgeContracts}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8"
+                                        Padding="12"
+                                        Style="{DynamicResource CardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,2,0,0"
+                                                   Text="{Binding IdVersion}"
+                                                   Foreground="#8DD0FF"
+                                                   FontFamily="Consolas"
+                                                   FontSize="8" />
+                                        <TextBlock Margin="0,7,0,0"
+                                                   Text="{Binding MappingSummary}"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="{Binding SourceFiles}"
+                                                   FontSize="8" />
+                                        <TextBlock Margin="0,7,0,0"
+                                                   Text="{Binding ApplyStatus}"
+                                                   Foreground="#F8C33A"
+                                                   FontSize="8"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Margin="0,10,0,0"
+                               Text="Plano simulado"
+                               FontSize="15"
+                               FontWeight="SemiBold" />
+                    <ItemsControl Margin="0,9,0,0"
+                                  ItemsSource="{Binding AutomationBridgeActions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,9">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="24"
+                                            Height="24"
+                                            Background="#123B68"
+                                            CornerRadius="12"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding Order}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="9"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Code}"
+                                                   FontSize="9"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,2,0,0"
+                                                   Text="{Binding Description}"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                        <TextBlock Margin="0,3,0,0"
+                                                   Text="{Binding Mode}"
+                                                   Foreground="{Binding Accent}"
+                                                   FontSize="7"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Margin="0,8,0,0"
+                            Padding="12"
+                            Background="#2D2510"
+                            BorderBrush="#6F5B1E"
+                            BorderThickness="1"
+                            CornerRadius="7">
+                        <StackPanel>
+                            <TextBlock Text="Limites desta fase"
+                                       Foreground="#FFD56A"
+                                       FontSize="10"
+                                       FontWeight="SemiBold" />
+                            <ItemsControl Margin="0,6,0,0"
+                                          ItemsSource="{Binding AutomationBridgeWarnings}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="0,2,0,0"
+                                                   Text="{Binding StringFormat=• {0}}"
+                                                   Foreground="#D5C99C"
+                                                   FontSize="8" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

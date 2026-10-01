@@ -5,7 +5,10 @@ using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Execution;
 using AutoAIBuilder.Application.Automation.Orchestration;
 using AutoAIBuilder.Application.Automation.Pilots;
+using AutoAIBuilder.Application.Automation.Preview;
+using AutoAIBuilder.Application.Automation.Supervised;
 using AutoAIBuilder.Application.Automation.Validation;
+using AutoAIBuilder.Application.CadVisualization;
 using AutoAIBuilder.Application.Dashboard;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.History;
@@ -15,7 +18,9 @@ using AutoAIBuilder.Application.Notifications;
 using AutoAIBuilder.Application.Operations;
 using AutoAIBuilder.Application.Projects;
 using AutoAIBuilder.Application.Reports;
+using AutoAIBuilder.Application.Recognition;
 using AutoAIBuilder.Application.Settings;
+using AutoAIBuilder.Application.Semantics;
 using AutoAIBuilder.Application.Validation;
 using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
@@ -24,9 +29,13 @@ using AutoAIBuilder.Infrastructure.Automation;
 using AutoAIBuilder.Infrastructure.Automation.Adapters;
 using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
+using AutoAIBuilder.Infrastructure.Automation.Supervised;
+using AutoAIBuilder.Infrastructure.CadVisualization;
 using AutoAIBuilder.Infrastructure.Diagnostics;
 using AutoAIBuilder.Infrastructure.Persistence;
 using AutoAIBuilder.Infrastructure.Reports;
+using AutoAIBuilder.Infrastructure.Recognition;
+using AutoAIBuilder.Infrastructure.Semantics;
 
 namespace AutoAIBuilder.Desktop.Composition;
 
@@ -142,6 +151,21 @@ public static class DesktopCompositionRoot
                 maskCatalogRepository,
                 contractSerializer,
                 contractValidator);
+        ISemanticWorkspaceService semanticWorkspaceService =
+            new SemanticCsvWorkspaceService(
+                new SqliteSemanticDatasetRepository(database));
+        IAutomationPreviewService automationPreviewService =
+            new AutomationPreviewService(
+                new SqliteAutomationPreviewDecisionRepository(database));
+        ISupervisedAutomationService supervisedAutomationService =
+            new SupervisedAutomationService(
+                new AutoCadSupervisedRunner());
+        ICadVisualizationService cadVisualizationService =
+            new CadVisualizationService(
+                new AutoCadCoreConsoleExporter());
+        ICadRecognitionService cadRecognitionService =
+            new CadRecognitionService(
+                new AutoCadEntityInventoryExporter());
         operationCoordinator.RecoverInterruptedOperations();
         if (interruptedAutomations > 0)
         {
@@ -176,7 +200,13 @@ public static class DesktopCompositionRoot
             operationCoordinator,
             verifiedCopyPilotService,
             automationMaskCatalogService,
-            automationOrchestrator);
+            automationOrchestrator,
+            new LegacyAutomationBridgeService(),
+            automationPreviewService,
+            supervisedAutomationService,
+            semanticWorkspaceService,
+            cadVisualizationService,
+            cadRecognitionService);
     }
 
     private static void WriteMigrationDiagnostics(

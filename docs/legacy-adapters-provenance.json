@@ -1,0 +1,47 @@
+[
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-170855-bedde22673214428ac67349a87d0ba71\\adaptadores\\autoaibuilder-11.6h.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\A99546C3394D\\autoaibuilder-11.6h.lsp",
+    "SHA256": "A99546C3394DD7FAEEB79753DF83EFE33BC62451E8F3752265675781331FA27A"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-170855-bedde22673214428ac67349a87d0ba71\\adaptadores\\mascara_camadas_v05.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\35F3493B24BF\\mascara_camadas_v05.lsp",
+    "SHA256": "35F3493B24BFC8D99147F952A6EB014003E298150BA5C37FA104C15BF9CA384B"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-170855-bedde22673214428ac67349a87d0ba71\\adaptadores\\mascara_limpeza_v06.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\790DF198E8F4\\mascara_limpeza_v06.lsp",
+    "SHA256": "790DF198E8F4CE61BCE438742ADD9948B094088EE3391914E428D19BC6E622AB"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-170855-bedde22673214428ac67349a87d0ba71\\adaptadores\\mascara_previsualizar_v04.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\3D6CE83AF2E6\\mascara_previsualizar_v04.lsp",
+    "SHA256": "3D6CE83AF2E68FB71F8A278F873C12E4A996AEF5A1D3FF702A64A83D2107D271"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-171348-514edaeb9df64fe7a5500a691ba54be8\\adaptadores\\autoaibuilder-11.6h.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\B4188E272CBB\\autoaibuilder-11.6h.lsp",
+    "SHA256": "B4188E272CBB5293356E04DA0B25C0471123FD754464D2967C43519A3FDC9DCC"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-171348-514edaeb9df64fe7a5500a691ba54be8\\adaptadores\\mascara_camadas_v05.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\8EA1AC735E45\\mascara_camadas_v05.lsp",
+    "SHA256": "8EA1AC735E45549041A7EAEFB8040922442F80E2D7E16965CFA09607229BC002"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-171348-514edaeb9df64fe7a5500a691ba54be8\\adaptadores\\mascara_limpeza_v06.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\7707A6E30887\\mascara_limpeza_v06.lsp",
+    "SHA256": "7707A6E30887E2F319CF07CA3CE9F6EFC830E926238874CD5670747677553D26"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-172336-e0544cf5600549959fbe016eabcbadce\\adaptadores\\autoaibuilder-contratos-11.6h.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\315C7A48713B\\autoaibuilder-contratos-11.6h.lsp",
+    "SHA256": "315C7A48713B22C5F562E6538F9AFD12CB68A68AC145DB8CDB64E7317251D51E"
+  },
+  {
+    "Source": "03_Saidas\\Execucoes_11.6H\\3b44a6accefd43099fe3ea4580805c13\\20260729-180103-2c25f58e841e4b869986bf3d85feb745\\adaptadores\\autoaibuilder-preservacao-11.6h1.lsp",
+    "Destination": "prototypes\\autocad\\execution-adapters\\500E1218327C\\autoaibuilder-preservacao-11.6h1.lsp",
+    "SHA256": "500E1218327CACE5700861C3EA8DD6B5DB6D912836E9C20C5FC53CFEE1E7D165"
+  }
+]

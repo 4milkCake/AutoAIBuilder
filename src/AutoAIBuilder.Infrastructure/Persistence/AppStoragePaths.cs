@@ -15,6 +15,12 @@ public static class AppStoragePaths
 
     public static string BackupDirectory => Path.Combine(DataDirectory, "Backups");
 
+    public static string CadVisualizationDirectory =>
+        Path.Combine(DataDirectory, "CadVisualization");
+
+    public static string RecognitionDirectory =>
+        Path.Combine(DataDirectory, "Recognition");
+
     public static string DatabaseFile => Path.Combine(DataDirectory, "autoaibuilder.db");
 
     public static string StorageLocationFile =>

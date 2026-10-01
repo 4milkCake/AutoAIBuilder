@@ -1,0 +1,961 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.SemanticReviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AutoAIBuilder.Desktop.Controls"
+             AutomationProperties.Name="Central avançada de revisão semântica">
+    <UserControl.Resources>
+        <Style x:Key="SemanticGridStyle"
+               TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="Background" Value="#091523" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="RowBackground" Value="#091523" />
+            <Setter Property="AlternatingRowBackground" Value="#0D1D30" />
+            <Setter Property="SelectionMode" Value="Single" />
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#102641" />
+            <Setter Property="Foreground" Value="#DCE6F4" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <Setter Property="Background" Value="#091523" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1,1,1,0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              ContentSource="Header" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder"
+                                        Property="Background"
+                                        Value="#102641" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder"
+                                        Property="Background"
+                                        Value="#123B68" />
+                                <Setter Property="Foreground" Value="#E7EEF8" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16,13"
+                Background="#0D1D30"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Marco 11.6E.1 — Revisão arquitetônica ampliada"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,5,0,0"
+                               Text="AutoCAD sobre cópia técnica → planta interativa → pontos alinhados → revisão. O DWG original permanece intacto."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="9" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Padding="12,6"
+                        Background="#102641"
+                        BorderBrush="{Binding SemanticBaselineAccent}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SemanticBaselineStatus}"
+                               Foreground="{Binding SemanticBaselineAccent}"
+                               FontSize="9"
+                               FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="310" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Fonte semântica"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding SemanticDatasetTitle}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SemanticDatasetPath}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8"
+                                       ToolTip="{Binding SemanticDatasetPath}" />
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding SemanticImportedAt}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Text="{Binding SemanticFingerprint}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Button Margin="0,12,0,0"
+                                    Content="Importar CSVs semânticos"
+                                    Command="{Binding ImportSemanticCsvCommand}"
+                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                            <Button Margin="0,7,0,0"
+                                    Content="Gerar planta com AutoCAD"
+                                    Command="{Binding GenerateCadVisualizationCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                            <StackPanel Margin="0,8,0,0"
+                                        Orientation="Horizontal"
+                                        Visibility="{Binding CadVisualizationRunningVisibility}">
+                                <ProgressBar Width="72"
+                                             Height="4"
+                                             IsIndeterminate="True" />
+                                <TextBlock Margin="8,0,0,0"
+                                           Text="Processando cópia…"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                            </StackPanel>
+                            <TextBlock Margin="0,7,0,0"
+                                       Text="{Binding CadVisualizationStatus}"
+                                       TextWrapping="Wrap"
+                                       Foreground="#63B8FF"
+                                       FontSize="8" />
+                            <StackPanel Margin="0,8,0,0"
+                                        Orientation="Horizontal"
+                                        Visibility="{Binding SemanticImportRunningVisibility}">
+                                <ProgressBar Width="72"
+                                             Height="4"
+                                             IsIndeterminate="True" />
+                                <TextBlock Margin="8,0,0,0"
+                                           Text="Validando…"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="8" />
+                            </StackPanel>
+                            <TextBlock Margin="0,9,0,0"
+                                       Text="A reimportação preserva correções e revisões humanas já registradas."
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Totais"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <UniformGrid Margin="0,10,0,0"
+                                         Columns="2">
+                                <Border Margin="0,0,5,5"
+                                        Padding="9"
+                                        Background="#102641"
+                                        CornerRadius="5">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SemanticPointCount}"
+                                                   FontSize="19"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="Pontos"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Margin="5,0,0,5"
+                                        Padding="9"
+                                        Background="#102641"
+                                        CornerRadius="5">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SemanticComponentCount}"
+                                                   FontSize="19"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="Componentes"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Margin="0,5,5,0"
+                                        Padding="9"
+                                        Background="#102641"
+                                        CornerRadius="5">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SemanticElectricalCount}"
+                                                   Foreground="#63B8FF"
+                                                   FontSize="19"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="Elétricos"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Margin="5,5,0,0"
+                                        Padding="9"
+                                        Background="#102641"
+                                        CornerRadius="5">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SemanticHydraulicCount}"
+                                                   Foreground="#28D7C0"
+                                                   FontSize="19"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="Hidráulicos"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding SemanticLayerCount, StringFormat={}{0} camadas semânticas}"
+                                       FontSize="9"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SemanticDirectionSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,10,0,0"
+                            Padding="14"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Revisão supervisionada"
+                                       Style="{DynamicResource SectionTitleStyle}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding SemanticReviewProgress}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SemanticPendingCount}"
+                                       Foreground="#F8C33A"
+                                       FontSize="9"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SemanticKnowledgeSummary}"
+                                       Foreground="#A78BFA"
+                                       FontSize="9"
+                                       FontWeight="SemiBold" />
+                            <Border Margin="0,10,0,0"
+                                    Padding="10"
+                                    Background="#091523"
+                                    CornerRadius="5">
+                                <TextBlock Text="{Binding SemanticSummary}"
+                                           FontSize="8" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Column="2"
+                    Padding="10"
+                    Style="{DynamicResource CardStyle}">
+                <Grid>
+                    <TextBlock Text="Importe o CSV de pontos v07 para iniciar a revisão."
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               Visibility="{Binding SemanticEmptyVisibility}" />
+
+                    <TabControl SelectedIndex="{Binding SelectedSemanticReviewTabIndex}"
+                                Visibility="{Binding SemanticHasDataVisibility}">
+                        <TabItem Header="Visão geral">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="210" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="230" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Border Padding="10"
+                                        Background="#07111E"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Planta arquitetônica interativa"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="14,1,0,0"
+                                                       Text="● Elétrico"
+                                                       Foreground="#2C9BFF"
+                                                       FontSize="8" />
+                                            <TextBlock Margin="10,1,0,0"
+                                                       Text="● Hidráulico"
+                                                       Foreground="#28D7C0"
+                                                       FontSize="8" />
+                                            <TextBlock Margin="10,1,0,0"
+                                                       Text="● Revisar"
+                                                       Foreground="#F8C33A"
+                                                       FontSize="8" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0"
+                                                    HorizontalAlignment="Right"
+                                                    Orientation="Horizontal"
+                                                    Visibility="{Binding CadVisualizationVisibility}">
+                                            <TextBlock Margin="0,3,10,0"
+                                                       Text="{Binding CadVisualizationSummary}"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                            <Button Width="27"
+                                                    Height="23"
+                                                    Padding="0"
+                                                    Content="−"
+                                                    Click="CadZoomOut_Click"
+                                                    ToolTip="Reduzir zoom"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <Button Width="27"
+                                                    Height="23"
+                                                    Margin="4,0,0,0"
+                                                    Padding="0"
+                                                    Content="+"
+                                                    Click="CadZoomIn_Click"
+                                                    ToolTip="Ampliar"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <Button Height="23"
+                                                    Margin="4,0,0,0"
+                                                    Padding="8,0"
+                                                    Content="Ajustar"
+                                                    Click="CadFit_Click"
+                                                    ToolTip="Ajustar à área dos pontos"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <Button Height="23"
+                                                    Margin="4,0,0,0"
+                                                    Padding="8,0"
+                                                    Content="Tudo"
+                                                    Click="CadFitAll_Click"
+                                                    ToolTip="Mostrar todo o model space"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <Button Height="23"
+                                                    Margin="4,0,0,0"
+                                                    Padding="10,0"
+                                                    Content="Expandir"
+                                                    Click="CadExpand_Click"
+                                                    ToolTip="Abrir a revisão CAD em uma janela maximizada"
+                                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="0"
+                                                   Margin="0,0,255,0"
+                                                   HorizontalAlignment="Right"
+                                                   MaxWidth="350"
+                                                   Text="{Binding SemanticSelectedMapSummary}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="#F8C33A"
+                                                   FontSize="8"
+                                                   FontWeight="SemiBold"
+                                                   ToolTip="{Binding SemanticSelectedMapSummary}" />
+                                        <Grid Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <controls:CadViewportControl x:Name="CadViewport"
+                                                                         Snapshot="{Binding CadVisualization}"
+                                                                         OverlayPoints="{Binding CadOverlayPoints}"
+                                                                         Layers="{Binding CadLayers}"
+                                                                         SelectedPointId="{Binding CadSelectedPointId}"
+                                                                         SelectPointCommand="{Binding SelectCadOverlayPointCommand}"
+                                                                         Visibility="{Binding CadVisualizationVisibility}"
+                                                                         ToolTip="Roda do mouse: zoom • arraste: mover • clique no ponto: revisar" />
+                                            <Viewbox Grid.Column="0"
+                                                     Stretch="Uniform"
+                                                     Visibility="{Binding SemanticCoordinateMapVisibility}">
+                                            <ItemsControl Width="720"
+                                                          Height="175"
+                                                          ItemsSource="{Binding SemanticMapPoints}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <Canvas />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemContainerStyle>
+                                                    <Style TargetType="ContentPresenter">
+                                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                                                        <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}" />
+                                                    </Style>
+                                                </ItemsControl.ItemContainerStyle>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Width="{Binding ContainerSize}"
+                                                                Height="{Binding ContainerSize}"
+                                                                Padding="0"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Cursor="Hand"
+                                                                Command="{Binding DataContext.SelectSemanticMapPointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="{Binding ToolTip}">
+                                                            <Grid>
+                                                                <Ellipse Fill="#33F8C33A"
+                                                                         Stroke="#FFF4C2"
+                                                                         StrokeThickness="2"
+                                                                         Visibility="{Binding SelectionVisibility}" />
+                                                                <Ellipse Width="{Binding DotSize}"
+                                                                         Height="{Binding DotSize}"
+                                                                         HorizontalAlignment="Center"
+                                                                         VerticalAlignment="Center"
+                                                                         Fill="{Binding Accent}">
+                                                                    <Ellipse.Style>
+                                                                        <Style TargetType="Ellipse">
+                                                                            <Setter Property="Stroke" Value="Transparent" />
+                                                                            <Setter Property="StrokeThickness" Value="0" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding SelectionVisibility}"
+                                                                                             Value="Visible">
+                                                                                    <Setter Property="Stroke" Value="White" />
+                                                                                    <Setter Property="StrokeThickness" Value="1.5" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Ellipse.Style>
+                                                                </Ellipse>
+                                                            </Grid>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            </Viewbox>
+                                            <Border Grid.Column="1"
+                                                    Width="190"
+                                                    Margin="8,0,0,0"
+                                                    Padding="7"
+                                                    Background="#091523"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Visibility="{Binding CadLayerPanelVisibility}">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="*" />
+                                                    </Grid.RowDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Layers"
+                                                                   FontSize="9"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding CadFidelitySummary}"
+                                                                   Foreground="#36D17C"
+                                                                   FontSize="7"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   ToolTip="{Binding CadFidelitySummary}" />
+                                                    </StackPanel>
+                                                    <TextBox Grid.Row="1"
+                                                             Height="22"
+                                                             Margin="0,5,0,0"
+                                                             Padding="5,1"
+                                                             Text="{Binding CadLayerSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                             FontSize="8"
+                                                             ToolTip="Pesquisar layer" />
+                                                    <ComboBox Grid.Row="2"
+                                                              Height="22"
+                                                              Margin="0,4,0,0"
+                                                              ItemsSource="{Binding CadLayerGroupOptions}"
+                                                              SelectedItem="{Binding SelectedCadLayerGroup}"
+                                                              FontSize="8"
+                                                              ToolTip="Agrupar layers por finalidade" />
+                                                    <StackPanel Grid.Row="3"
+                                                                Margin="0,4,0,0"
+                                                                Orientation="Horizontal">
+                                                        <Button Height="20"
+                                                                Padding="6,0"
+                                                                Content="Todas"
+                                                                Command="{Binding ShowAllCadLayersCommand}"
+                                                                FontSize="7"
+                                                                Style="{DynamicResource SecondaryButtonStyle}" />
+                                                        <Button Height="20"
+                                                                Margin="4,0,0,0"
+                                                                Padding="6,0"
+                                                                Content="Nenhuma"
+                                                                Command="{Binding HideAllCadLayersCommand}"
+                                                                FontSize="7"
+                                                                Style="{DynamicResource SecondaryButtonStyle}" />
+                                                    </StackPanel>
+                                                    <ScrollViewer Grid.Row="4"
+                                                                  Margin="0,5,0,0"
+                                                                  VerticalScrollBarVisibility="Auto">
+                                                        <ItemsControl ItemsSource="{Binding FilteredCadLayers}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <CheckBox Margin="0,0,0,3"
+                                                                              IsChecked="{Binding IsVisible}"
+                                                                              Content="{Binding Name}"
+                                                                              FontSize="7.5"
+                                                                              ToolTip="{Binding Name}" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="8" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="180" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="190" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Pontos identificados"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding SemanticFilteredCount}"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="8" />
+                                        </StackPanel>
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding SemanticSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Pesquisar código, descrição, handle, camada ou texto"
+                                                 AutomationProperties.Name="Pesquisar pontos semânticos" />
+                                        <ComboBox Grid.Column="3"
+                                                  ItemsSource="{Binding SemanticFilterOptions}"
+                                                  SelectedItem="{Binding SelectedSemanticFilter}"
+                                                  AutomationProperties.Name="Filtrar pontos semânticos" />
+                                    </Grid>
+                                    <DataGrid x:Name="SemanticPointsGrid"
+                                              Grid.Row="2"
+                                              ItemsSource="{Binding SemanticPoints}"
+                                              SelectedItem="{Binding SelectedSemanticPoint}"
+                                              SelectionChanged="SemanticPointsGrid_SelectionChanged"
+                                              Style="{StaticResource SemanticGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID"
+                                                                Binding="{Binding ExternalId}"
+                                                                Width="100" />
+                                            <DataGridTextColumn Header="Disciplina"
+                                                                Binding="{Binding Discipline}"
+                                                                Width="85" />
+                                            <DataGridTextColumn Header="Código"
+                                                                Binding="{Binding Code}"
+                                                                Width="2*" />
+                                            <DataGridTextColumn Header="Descrição"
+                                                                Binding="{Binding Description}"
+                                                                Width="3*" />
+                                            <DataGridTextColumn Header="Altura"
+                                                                Binding="{Binding Height}"
+                                                                Width="105" />
+                                            <DataGridTextColumn Header="Estado"
+                                                                Binding="{Binding ReviewStatus}"
+                                                                Width="85" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+
+                                <Border Grid.Row="4"
+                                        Padding="10"
+                                        Background="#091523"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        Visibility="{Binding SemanticPointEditorVisibility}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.35*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="1*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <TextBlock Text="Correção do ponto"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Margin="0,5,0,8"
+                                                           Text="{Binding SemanticEditorMessage}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="8" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="115" />
+                                                        <ColumnDefinition Width="8" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ComboBox ItemsSource="{Binding SemanticDisciplineOptions}"
+                                                              SelectedItem="{Binding SemanticEditorDiscipline}" />
+                                                    <TextBox Grid.Column="2"
+                                                             Text="{Binding SemanticEditorHeight, UpdateSourceTrigger=PropertyChanged}"
+                                                             ToolTip="Altura em cm ou condição como PISO" />
+                                                </Grid>
+                                                <TextBox Margin="0,7,0,0"
+                                                         Text="{Binding SemanticEditorCode, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="Código semântico" />
+                                                <TextBox Margin="0,7,0,0"
+                                                         Text="{Binding SemanticEditorDescription, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="Descrição" />
+                                                <TextBox Margin="0,7,0,0"
+                                                         Text="{Binding SemanticEditorNote, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="Motivo ou observação da revisão" />
+                                                <CheckBox Margin="0,7,0,0"
+                                                          IsChecked="{Binding SemanticAddToKnowledge}"
+                                                          Content="Guardar como conhecimento deste projeto"
+                                                          FontSize="8" />
+                                                <StackPanel Margin="0,8,0,0"
+                                                            Orientation="Horizontal">
+                                                    <Button Content="Salvar correção"
+                                                            Command="{Binding SaveSemanticCorrectionCommand}"
+                                                            Style="{DynamicResource PrimaryButtonStyle}" />
+                                                    <Button Margin="7,0,0,0"
+                                                            Content="Desfazer"
+                                                            Command="{Binding UndoSemanticPointRevisionCommand}"
+                                                            Style="{DynamicResource SecondaryButtonStyle}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </ScrollViewer>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Componentes e textos associados"
+                                                       FontWeight="SemiBold" />
+                                            <ListBox Margin="0,7,0,0"
+                                                     ItemsSource="{Binding SelectedSemanticComponents}"
+                                                     Background="Transparent"
+                                                     BorderThickness="0">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Margin="0,0,0,5"
+                                                                Padding="7"
+                                                                Background="#102030"
+                                                                CornerRadius="4">
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Content}"
+                                                                           FontSize="9"
+                                                                           FontWeight="SemiBold" />
+                                                                <TextBlock FontSize="8"
+                                                                           Foreground="{DynamicResource MutedTextBrush}">
+                                                                    <Run Text="{Binding ComponentClass}" />
+                                                                    <Run Text=" • " />
+                                                                    <Run Text="{Binding ObjectType}" />
+                                                                    <Run Text=" • distância " />
+                                                                    <Run Text="{Binding Distance}" />
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="Pontos semelhantes"
+                                                       FontWeight="SemiBold" />
+                                            <Button Margin="0,7,0,0"
+                                                    Content="Localizar semelhantes"
+                                                    Command="{Binding FindSimilarSemanticPointsCommand}"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <ListBox Margin="0,7,0,0"
+                                                     MaxHeight="120"
+                                                     ItemsSource="{Binding SemanticSimilarPoints}"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Visibility="{Binding SemanticSimilarVisibility}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,5">
+                                                            <TextBlock Text="{Binding ExternalId}"
+                                                                       FontSize="8"
+                                                                       FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding Description}"
+                                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                                       FontSize="8" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <Button Margin="0,7,0,0"
+                                                    Content="Aplicar aos semelhantes"
+                                                    Command="{Binding ApplySemanticCorrectionToSimilarCommand}"
+                                                    Style="{DynamicResource PrimaryButtonStyle}"
+                                                    Visibility="{Binding SemanticSimilarVisibility}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="Pendências">
+                            <Grid Margin="8">
+                                <TextBlock Text="Nenhuma pendência detectada."
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Visibility="{Binding SemanticPendingEmptyVisibility}" />
+                                <ListBox ItemsSource="{Binding SemanticPendingIssues}"
+                                         Background="Transparent"
+                                         BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8"
+                                                    Padding="12"
+                                                    Background="#091523"
+                                                    BorderBrush="{Binding Accent}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="8" />
+                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="180" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Ellipse Width="6"
+                                                             Height="6"
+                                                             Fill="{Binding Accent}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Kind}"
+                                                               Foreground="{Binding Accent}"
+                                                               FontSize="9"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding ExternalId}"
+                                                               FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="3">
+                                                        <TextBlock Text="{Binding Title}"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Detail}"
+                                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                                   FontSize="8" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="4"
+                                                            Margin="12,0,0,0"
+                                                            Content="Revisar"
+                                                            Command="{Binding DataContext.SelectSemanticIssueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{DynamicResource SecondaryButtonStyle}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="Direções">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="210" />
+                                </Grid.RowDefinitions>
+                                <DataGrid ItemsSource="{Binding SemanticDirections}"
+                                          SelectedItem="{Binding SelectedSemanticDirection}"
+                                          Style="{StaticResource SemanticGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Handle"
+                                                            Binding="{Binding Handle}"
+                                                            Width="110" />
+                                        <DataGridTextColumn Header="Sugerida"
+                                                            Binding="{Binding SuggestedDirection}"
+                                                            Width="100" />
+                                        <DataGridTextColumn Header="Direção efetiva"
+                                                            Binding="{Binding EffectiveDirection}"
+                                                            Width="120" />
+                                        <DataGridTextColumn Header="Rotação"
+                                                            Binding="{Binding Rotation}"
+                                                            Width="90" />
+                                        <DataGridTextColumn Header="Origem"
+                                                            Binding="{Binding OffsetOrigin}"
+                                                            Width="2*" />
+                                        <DataGridTextColumn Header="Estado"
+                                                            Binding="{Binding ReviewStatus}"
+                                                            Width="100" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Border Grid.Row="2"
+                                        Padding="12"
+                                        Background="#091523"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        Visibility="{Binding SemanticDirectionEditorVisibility}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="14" />
+                                            <ColumnDefinition Width="240" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Revisão da direção selecionada"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="9">
+                                                <Run Text="Handle " />
+                                                <Run Text="{Binding SelectedSemanticDirection.Handle}" />
+                                                <Run Text=" • rotação " />
+                                                <Run Text="{Binding SelectedSemanticDirection.Rotation}" />
+                                                <Run Text=" • sugestão original " />
+                                                <Run Text="{Binding SelectedSemanticDirection.SuggestedDirection}" />
+                                            </TextBlock>
+                                            <TextBlock Margin="0,5,0,0"
+                                                       Text="{Binding SelectedSemanticDirection.OffsetOrigin}"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="9" />
+                                            <ComboBox Margin="0,12,0,0"
+                                                      Width="180"
+                                                      HorizontalAlignment="Left"
+                                                      ItemsSource="{Binding SemanticDirectionOptions}"
+                                                      SelectedItem="{Binding SemanticDirectionEditor}" />
+                                            <TextBox Margin="0,7,0,0"
+                                                     Text="{Binding SemanticDirectionNote, UpdateSourceTrigger=PropertyChanged}"
+                                                     ToolTip="Observação da revisão de direção" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2"
+                                                    VerticalAlignment="Center">
+                                            <Button Content="Aprovar direção"
+                                                    Command="{Binding ApproveSemanticDirectionCommand}"
+                                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                                            <Button Margin="0,7,0,0"
+                                                    Content="Salvar como corrigida"
+                                                    Command="{Binding CorrectSemanticDirectionCommand}"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                            <Button Margin="0,7,0,0"
+                                                    Content="Desfazer última revisão"
+                                                    Command="{Binding UndoSemanticDirectionRevisionCommand}"
+                                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="Histórico e aprendizado">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="8" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="Histórico reversível"
+                                               FontWeight="SemiBold" />
+                                    <DataGrid Grid.Row="2"
+                                              ItemsSource="{Binding SemanticRevisions}"
+                                              Style="{StaticResource SemanticGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Data"
+                                                                Binding="{Binding Date}"
+                                                                Width="80" />
+                                            <DataGridTextColumn Header="Hora"
+                                                                Binding="{Binding Time}"
+                                                                Width="70" />
+                                            <DataGridTextColumn Header="Item"
+                                                                Binding="{Binding ExternalId}"
+                                                                Width="110" />
+                                            <DataGridTextColumn Header="Ação"
+                                                                Binding="{Binding Action}"
+                                                                Width="130" />
+                                            <DataGridTextColumn Header="Resumo"
+                                                                Binding="{Binding Summary}"
+                                                                Width="2*" />
+                                            <DataGridTextColumn Header="Estado"
+                                                                Binding="{Binding Status}"
+                                                                Width="75" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="8" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Dicionário deste projeto"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="Nenhuma regra é promovida para outros projetos automaticamente."
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   FontSize="8" />
+                                    </StackPanel>
+                                    <DataGrid Grid.Row="2"
+                                              ItemsSource="{Binding SemanticKnowledgeEntries}"
+                                              Style="{StaticResource SemanticGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Origem"
+                                                                Binding="{Binding Source}"
+                                                                Width="1.4*" />
+                                            <DataGridTextColumn Header="Aprendido"
+                                                                Binding="{Binding LearnedCode}"
+                                                                Width="1.2*" />
+                                            <DataGridTextColumn Header="Altura"
+                                                                Binding="{Binding LearnedHeight}"
+                                                                Width="95" />
+                                            <DataGridTextColumn Header="Evidências"
+                                                                Binding="{Binding Evidence}"
+                                                                Width="90" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -39,6 +39,25 @@ public sealed partial class MainWindowViewModel
                 StatusMessage = "Catálogo e integridade dos arquivos atualizados.";
             }),
         new WorkspaceModule(
+            WorkspaceSection.SemanticReview,
+            () => SelectedProject is null
+                ? "Selecione um projeto para importar e revisar dados semânticos."
+                : $"Central semântica do projeto “{SelectedProject.Name}” carregada.",
+            activate: RefreshSemanticReview,
+            refresh: () =>
+            {
+                RefreshSemanticReview();
+                StatusMessage =
+                    "Pontos, componentes e diagnósticos semânticos atualizados.";
+            }),
+        new WorkspaceModule(
+            WorkspaceSection.Recognition,
+            () => SelectedProject is null
+                ? "Selecione um projeto para reconhecer um novo DWG."
+                : "Reconhecimento 11.6I carregado em modo somente leitura.",
+            activate: RefreshRecognition,
+            refresh: RefreshRecognition),
+        new WorkspaceModule(
             WorkspaceSection.Masks,
             () => "Registro interno carregado; máscaras catalogadas continuam "
                   + "sem execução no Marco 11.6B.",
@@ -49,6 +68,24 @@ public sealed partial class MainWindowViewModel
                 StatusMessage =
                     "Catálogo, adaptadores internos e avaliações atualizados.";
             }),
+        new WorkspaceModule(
+            WorkspaceSection.AutomationBridge,
+            () => "Rotinas AutoLISP catalogadas em modo somente análise; "
+                  + "execução e escrita no DWG permanecem bloqueadas.",
+            activate: RefreshAutomationBridge,
+            refresh: RefreshAutomationBridge),
+        new WorkspaceModule(
+            WorkspaceSection.AutomationPreview,
+            () => "Comparação antes/depois carregada; decisões são auditadas, "
+                  + "mas nenhuma alteração CAD é executada.",
+            activate: RefreshAutomationPreview,
+            refresh: RefreshAutomationPreview),
+        new WorkspaceModule(
+            WorkspaceSection.AutomationSupervised,
+            () => "Execução supervisionada 11.6H.1 carregada; preservação total "
+                  + "e integridade do DWG original confirmadas por auditoria.",
+            activate: RefreshSupervisedAutomation,
+            refresh: RefreshSupervisedAutomation),
         new WorkspaceModule(
             WorkspaceSection.Automation,
             () => SelectedProject is null

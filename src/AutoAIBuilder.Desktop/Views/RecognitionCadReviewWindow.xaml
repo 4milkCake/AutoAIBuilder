@@ -1,0 +1,208 @@
+<Window x:Class="AutoAIBuilder.Desktop.Views.RecognitionCadReviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:AutoAIBuilder.Desktop.Controls"
+        Title="AutoIA Builder — Reconhecimento DWG ampliado"
+        Width="1440"
+        Height="900"
+        MinWidth="980"
+        MinHeight="640"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterOwner"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        AutomationProperties.Name="Reconhecimento DWG ampliado">
+    <Window.Resources>
+        <Style x:Key="CadToolButtonStyle"
+               TargetType="Button">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="Foreground" Value="#E7EEF8" />
+            <Setter Property="Background" Value="#102641" />
+            <Setter Property="BorderBrush" Value="#31577B" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="CandidateGridStyle"
+               TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#203047" />
+            <Setter Property="Background" Value="#091523" />
+            <Setter Property="BorderBrush" Value="#203047" />
+            <Setter Property="Foreground" Value="#E7EEF8" />
+            <Setter Property="RowBackground" Value="#091523" />
+            <Setter Property="AlternatingRowBackground" Value="#0D1D30" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#102641" />
+            <Setter Property="Foreground" Value="#DCE6F4" />
+            <Setter Property="BorderBrush" Value="#203047" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="9,7" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*"
+                           MinHeight="300" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="245"
+                           MinHeight="145" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="15,11"
+                Background="#0D1D30"
+                BorderBrush="#203047"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="DWG e candidatos — visão ampliada"
+                               FontSize="17"
+                               FontWeight="SemiBold" />
+                    <StackPanel Margin="0,4,0,0"
+                                Orientation="Horizontal">
+                        <TextBlock Text="{Binding RecognitionSummary}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="9" />
+                        <TextBlock Margin="16,0,0,0"
+                                   Text="{Binding SelectedRecognitionCandidate.BlockName}"
+                                   Foreground="#F8C33A"
+                                   FontSize="9"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="8,0,0,0"
+                                   Text="{Binding SelectedRecognitionCandidate.Position}"
+                                   Foreground="#F8C33A"
+                                   FontSize="9" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <Button Content="−"
+                            ToolTip="Reduzir zoom"
+                            Click="CadZoomOut_Click"
+                            Style="{StaticResource CadToolButtonStyle}" />
+                    <Button Margin="5,0,0,0"
+                            Content="+"
+                            ToolTip="Ampliar"
+                            Click="CadZoomIn_Click"
+                            Style="{StaticResource CadToolButtonStyle}" />
+                    <Button Margin="5,0,0,0"
+                            Content="Ajustar aos candidatos"
+                            ToolTip="Enquadrar a área dos candidatos"
+                            Click="CadFit_Click"
+                            Style="{StaticResource CadToolButtonStyle}" />
+                    <Button Margin="5,0,0,0"
+                            Content="Mostrar tudo"
+                            ToolTip="Mostrar todo o model space"
+                            Click="CadFitAll_Click"
+                            Style="{StaticResource CadToolButtonStyle}" />
+                    <Button Margin="12,0,0,0"
+                            Content="Fechar"
+                            ToolTip="Fechar a janela ampliada (Esc)"
+                            Click="Close_Click"
+                            Style="{StaticResource CadToolButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Background="#050E18"
+                BorderBrush="#203047"
+                BorderThickness="1"
+                CornerRadius="6"
+                ClipToBounds="True">
+            <controls:CadViewportControl x:Name="CadViewport"
+                                         Snapshot="{Binding RecognitionCadSnapshot}"
+                                         OverlayPoints="{Binding RecognitionOverlayPoints}"
+                                         Layers="{Binding RecognitionCadLayers}"
+                                         SelectedPointId="{Binding SelectedRecognitionPointId}"
+                                         SelectPointCommand="{Binding SelectRecognitionOverlayPointCommand}"
+                                         OverlayPointSelected="CadViewport_OverlayPointSelected"
+                                         FitAllByDefault="True"
+                                         ToolTip="Roda do mouse: zoom • arraste: mover • clique no ponto: localizar na fila" />
+        </Border>
+
+        <GridSplitter Grid.Row="3"
+                      Height="8"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"
+                      Background="#31577B"
+                      ResizeDirection="Rows"
+                      ResizeBehavior="PreviousAndNext"
+                      ToolTip="Arraste para ajustar o tamanho do DWG e da fila" />
+
+        <Border Grid.Row="4"
+                Padding="10"
+                Background="#0D1D30"
+                BorderBrush="#203047"
+                BorderThickness="1"
+                CornerRadius="6">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="240" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Fila de candidatos"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding RecognitionCandidateCount, StringFormat={}{0} candidatos inventariados}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="8" />
+                    </StackPanel>
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding RecognitionFilterOptions}"
+                              SelectedItem="{Binding SelectedRecognitionFilter}" />
+                </Grid>
+                <DataGrid x:Name="RecognitionCandidatesGrid"
+                          Grid.Row="2"
+                          ItemsSource="{Binding RecognitionCandidates}"
+                          SelectedItem="{Binding SelectedRecognitionCandidate, Mode=TwoWay}"
+                          SelectionChanged="RecognitionCandidatesGrid_SelectionChanged"
+                          Style="{StaticResource CandidateGridStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Status"
+                                            Binding="{Binding Status}"
+                                            Width="105" />
+                        <DataGridTextColumn Header="Bloco"
+                                            Binding="{Binding BlockName}"
+                                            Width="2*" />
+                        <DataGridTextColumn Header="Layer"
+                                            Binding="{Binding SourceLayer}"
+                                            Width="1.5*" />
+                        <DataGridTextColumn Header="Proposta"
+                                            Binding="{Binding Description}"
+                                            Width="2.2*" />
+                        <DataGridTextColumn Header="Confiança"
+                                            Binding="{Binding ConfidenceScore}"
+                                            Width="85" />
+                        <DataGridTextColumn Header="Posição"
+                                            Binding="{Binding Position}"
+                                            Width="180" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

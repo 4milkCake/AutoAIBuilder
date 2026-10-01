@@ -1,7 +1,24 @@
 # AutoAIBuilder
 
+## Onboarding e colaboração
+
+Comece pelo [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), preservado do handoff de
+01/10/2026. Para a direção vigente, consulte [Plano Codex-first](docs/codex-first-plan.md)
+e [roadmap atual](docs/roadmap-current.md): o handoff contém também decisões históricas.
+O [guia do Pablo](docs/onboarding.md) reúne instalação, compilação, execução e colaboração.
+O [índice da documentação](docs/README.md) orienta a leitura por assunto.
+
+As rotinas AutoLISP históricas estão em `prototypes/autocad/legacy`.
+Os DWGs reais, bancos locais e evidências de clientes não fazem parte do repositório.
+Consulte [preparação para publicação](docs/repository-publication.md).
+
 Aplicação desktop WPF para coordenar automações e agentes de IA aplicados a
 projetos elétricos e hidrossanitários.
+
+> **Direção vigente:** o aplicativo está preservado e em pausa funcional
+> controlada enquanto máscara, coordenadas e o primeiro lançamento elétrico
+> são validados diretamente no Codex. Consulte o
+> [Plano Codex-first](docs/codex-first-plan.md).
 
 ## Estrutura inicial
 
@@ -73,14 +90,78 @@ podem ser revalidadas e ter a prontidão auditada, mas a execução continua
 bloqueada. Consulte
 [Marco 11.6B — Registro seguro de adaptadores](docs/adapter-registry.md).
 
-O início do Marco 11.6C preserva e reaproveita a automação desenvolvida
-anteriormente no ChatGPT Work. Antes de criar um adaptador real, o conteúdo será
-inventariado, decomposto e comparado aos contratos existentes. O levantamento
-local confirmou que os artefatos funcionais ainda não foram fornecidos ao
-repositório; por isso, nenhuma regra ou máscara será inventada por suposição.
-Consulte a
+O Marco 11.6C conecta os relatórios reais v07/v081 produzidos pela automação
+histórica ao modelo interno do AutoAIBuilder. O módulo `Análise semântica`
+valida e importa pontos, componentes e diagnósticos para o SQLite, calcula
+SHA-256, reproduz a linha de base auditada de 272 pontos e oferece pesquisa,
+filtros, prévia espacial e estados de revisão humana. A origem permanece
+somente leitura e nenhuma ação CAD é executada. Consulte a
+[ponte semântica e revisão inicial](docs/semantic-bridge.md), a
 [avaliação de reaproveitamento](docs/automation-reuse-assessment.md) e o
 [pacote de recepção](docs/automation-source-intake.md).
+
+O Marco 11.6D transforma a análise em uma central de revisão supervisionada.
+Ela explica as evidências de cada ponto, mostra componentes e textos
+associados, reúne pendências, permite corrigir pontos e direções, mantém
+histórico reversível e cria um dicionário restrito ao projeto. A aplicação de
+uma correção a itens semelhantes exige confirmação e gera auditoria individual.
+Consulte a
+[Central avançada de revisão semântica](docs/semantic-review-advanced.md).
+
+O ajuste 11.6D.1 conecta a fila de pendências à localização visual: **Revisar**
+abre a Visão geral, seleciona e rola a tabela até o item, identifica o ponto no
+topo do mapa e aplica um marcador destacado. Os pontos do mapa também são
+clicáveis. Para a próxima geração do visualizador, foi adotado o AutoCAD 2025
+como primeiro motor de leitura/conversão, mantendo um contrato substituível para
+um futuro leitor DWG incorporado. Consulte a
+[decisão de visualização CAD](docs/cad-visualization-decision.md).
+
+O Marco 11.6E.1 entrega a visualização arquitetônica real em uma janela
+maximizada, com seleção centralizada, filtros de layers e indicador de
+cobertura. O AutoCAD
+Core Console lê exclusivamente uma cópia técnica verificada do DWG e exporta
+um artefato vetorial interno. A central semântica desenha a planta sob os
+pontos já importados, com zoom, movimentação, ajuste à tela, filtros de layers
+e seleção sincronizada com o editor detalhado. O cache é identificado pelo
+SHA-256 do DWG; se o original mudar, o artefato anterior não é reutilizado.
+Consulte a
+[Visualização arquitetônica supervisionada](docs/cad-visualization.md).
+
+O Marco 11.6F cria a primeira ponte com as nove rotinas AutoLISP históricas.
+Ela extrai comandos, entradas, saídas e dependências por análise estática,
+confirma os arquivos por SHA-256 e associa a cadeia a contratos internos de
+identificação de pontos e criação de máscara. As versões 05 e 06, que contêm
+operações capazes de modificar entidades, ficam bloqueadas. A tela simula a
+sequência sobre a base semântica já importada, sem carregar AutoLISP, executar
+comandos CAD ou alterar DWGs. Consulte a
+[ponte com a automação existente](docs/automation-bridge-11.6f.md).
+
+O Marco 11.6G acrescenta a pré-visualização supervisionada antes/depois. A
+arquitetura original permanece protegida e os elementos detectados, propostos,
+corrigidos ou temporariamente ignorados aparecem em grupos independentes. Cada
+grupo pode ser aprovado ou rejeitado com observação auditável; as decisões são
+vinculadas ao SHA-256 do plano. Mesmo com todos os grupos aprovados, a tela não
+executa AutoLISP nem grava o DWG. Consulte a
+[pré-visualização supervisionada](docs/automation-preview-11.6g.md).
+
+O Marco 11.6H comprovou a execução isolada no AutoCAD com 272/272 pontos e
+100/100 componentes corretos. A inspeção visual posterior reprovou a limpeza
+arquitetônica porque uma referência de bloco composta foi removida. A premissa
+vigente passa a ser preservação total da arquitetura e foco em identificação,
+coordenadas, altura e orientação dos pontos.
+
+O **11.6H.1 — Modo de preservação total** corrigiu essa fronteira e foi
+aprovado em execução real: 272/272 pontos, 100/100 componentes e 1.400/1.400
+entidades preservadas, sem handles ausentes. O próximo ciclo é o reconhecimento
+supervisionado de um DWG novo. Consulte a
+[rota atual do produto](docs/roadmap-current.md) e a
+[execução supervisionada](docs/automation-supervised-11.6h.md).
+
+O Marco 11.6I acrescenta o reconhecimento supervisionado de um novo DWG. O
+AutoCAD inventaria uma cópia técnica sem mutações, o sistema compara blocos com
+a base validada, atribui confiança e permite aprovar, rejeitar ou corrigir cada
+candidato sobre a planta. Consulte o
+[reconhecimento 11.6I](docs/recognition-11.6i.md).
 
 Na primeira inicialização após a migração para SQLite, os antigos arquivos
 `projects.json`, `settings.json` e `activity-log.json` são importados de forma

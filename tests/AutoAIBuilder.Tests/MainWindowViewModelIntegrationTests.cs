@@ -2,8 +2,10 @@ using AutoAIBuilder.Application.Automation;
 using AutoAIBuilder.Application.Automation.Adapters;
 using AutoAIBuilder.Application.Automation.Catalog;
 using AutoAIBuilder.Application.Automation.Orchestration;
+using AutoAIBuilder.Application.Automation.Supervised;
 using AutoAIBuilder.Application.Diagnostics;
 using AutoAIBuilder.Application.Automation.Validation;
+using AutoAIBuilder.Application.CadVisualization;
 using AutoAIBuilder.Application.History;
 using AutoAIBuilder.Application.Maintenance;
 using AutoAIBuilder.Application.Navigation;
@@ -15,12 +17,17 @@ using AutoAIBuilder.Application.Settings;
 using AutoAIBuilder.Application.Validation;
 using AutoAIBuilder.Desktop.Services;
 using AutoAIBuilder.Desktop.ViewModels;
+using AutoAIBuilder.Domain.Recognition;
 using AutoAIBuilder.Infrastructure.Dashboard;
 using AutoAIBuilder.Infrastructure.Automation;
 using AutoAIBuilder.Infrastructure.Automation.Adapters;
 using AutoAIBuilder.Infrastructure.Automation.Catalog;
 using AutoAIBuilder.Infrastructure.Automation.Pilots;
+using AutoAIBuilder.Infrastructure.Automation.Supervised;
+using AutoAIBuilder.Infrastructure.CadVisualization;
 using AutoAIBuilder.Infrastructure.Persistence;
+using AutoAIBuilder.Infrastructure.Recognition;
+using AutoAIBuilder.Infrastructure.Semantics;
 using Microsoft.Data.Sqlite;
 
 namespace AutoAIBuilder.Tests;
@@ -65,6 +72,50 @@ public sealed class MainWindowViewModelIntegrationTests
         Assert.IsTrue(viewModel.DiagnosticLogs.Count >= 1);
         StringAssert.Contains(viewModel.DiagnosticSummary, "1 item");
         Assert.AreEqual(System.Windows.Visibility.Visible, viewModel.DiagnosticsVisibility);
+    }
+
+    [TestMethod]
+    public void RecognitionOverlaySelection_RevealsCandidateHiddenByFilter()
+    {
+        var logger = new InMemoryDiagnosticLogger();
+        var viewModel = CreateViewModel(
+            logger,
+            new StubDiagnosticService(logger));
+        var highConfidence = CreateRecognitionCandidate(
+            Guid.NewGuid(),
+            "ALTA",
+            92);
+        var hiddenCandidate = CreateRecognitionCandidate(
+            Guid.NewGuid(),
+            "OCULTO",
+            0);
+        var field = typeof(MainWindowViewModel).GetField(
+            "_allRecognitionCandidates",
+            System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.NonPublic);
+        Assert.IsNotNull(field);
+        var allCandidates =
+            (List<RecognitionCandidateItemViewModel>)field.GetValue(viewModel)!;
+        allCandidates.AddRange([highConfidence, hiddenCandidate]);
+        viewModel.SelectedRecognitionFilter = "Alta confiança";
+        Assert.AreEqual(1, viewModel.RecognitionCandidates.Count);
+
+        viewModel.SelectRecognitionOverlayPointCommand.Execute(
+            new CadOverlayPointViewModel(
+                hiddenCandidate.Id,
+                hiddenCandidate.Handle,
+                100,
+                200,
+                "#627087",
+                "Candidato oculto"));
+
+        Assert.AreEqual("Todos", viewModel.SelectedRecognitionFilter);
+        Assert.AreSame(
+            hiddenCandidate,
+            viewModel.SelectedRecognitionCandidate);
+        CollectionAssert.Contains(
+            viewModel.RecognitionCandidates,
+            hiddenCandidate);
     }
 
     [TestMethod]
@@ -319,8 +370,47 @@ public sealed class MainWindowViewModelIntegrationTests
             operationCoordinator,
             verifiedCopyPilot,
             maskCatalogService,
-            automationOrchestrator);
+            automationOrchestrator,
+            new LegacyAutomationBridgeService(),
+            new AutomationPreviewService(
+                new SqliteAutomationPreviewDecisionRepository(
+                    operationDatabase)),
+            new SupervisedAutomationService(
+                new UnavailableSupervisedCadRunner()),
+            new SemanticCsvWorkspaceService(
+                new SqliteSemanticDatasetRepository(operationDatabase)),
+            new CadVisualizationService(
+                new UnavailableCadGeometryExporter(),
+                storageRoot: Path.Combine(_directory, "cad-visualization")),
+            new CadRecognitionService(
+                new UnavailableCadEntityInventoryExporter(),
+                storageRoot: Path.Combine(_directory, "recognition")));
     }
+
+    private static RecognitionCandidateItemViewModel CreateRecognitionCandidate(
+        Guid id,
+        string handle,
+        int confidenceScore) =>
+        new(
+            id,
+            handle,
+            "INSERT",
+            "LAYER",
+            $"BLOCO-{handle}",
+            "100; 200",
+            "0°",
+            "A confirmar",
+            string.Empty,
+            "Símbolo ainda não classificado",
+            string.Empty,
+            string.Empty,
+            confidenceScore >= 85 ? "Alta" : "Desconhecida",
+            confidenceScore,
+            "Teste",
+            "Pendente",
+            "#627087",
+            string.Empty,
+            RecognitionCandidateStatus.Pending);
 
     private sealed class InMemoryDiagnosticLogger : IDiagnosticLogger
     {
@@ -346,6 +436,61 @@ public sealed class MainWindowViewModelIntegrationTests
                 exception?.Message,
                 exception?.StackTrace,
                 properties ?? new Dictionary<string, string>()));
+    }
+
+    private sealed class UnavailableCadGeometryExporter : ICadGeometryExporter
+    {
+        public CadExporterStatus GetStatus() => new(
+            false,
+            "AutoCAD de teste",
+            "Indisponível",
+            string.Empty,
+            string.Empty,
+            "Indisponível durante os testes da interface.");
+
+        public Task ExportAsync(
+            string sourceCopyPath,
+            string artifactPath,
+            string workingDirectory,
+            CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Exportação não esperada.");
+    }
+
+    private sealed class UnavailableCadEntityInventoryExporter :
+        ICadEntityInventoryExporter
+    {
+        public CadEntityInventoryExporterStatus GetStatus() => new(
+            false,
+            "AutoCAD de teste",
+            "Indisponível",
+            string.Empty,
+            string.Empty,
+            "Indisponível durante os testes da interface.");
+
+        public Task ExportAsync(
+            string sourceCopyPath,
+            string inventoryPath,
+            string workingDirectory,
+            CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Inventário não esperado.");
+    }
+
+    private sealed class UnavailableSupervisedCadRunner :
+        ISupervisedCadRunner
+    {
+        public CadExporterStatus GetStatus() => new(
+            false,
+            "AutoCAD de teste",
+            "Indisponível",
+            string.Empty,
+            string.Empty,
+            "Indisponível durante os testes da interface.");
+
+        public Task<SupervisedCadRunnerResult> RunAsync(
+            SupervisedCadRunnerRequest request,
+            CancellationToken cancellationToken) =>
+            throw new InvalidOperationException(
+                "Execução supervisionada não esperada.");
     }
 
     private sealed class StubDiagnosticService(IDiagnosticLogger logger) : IDiagnosticService

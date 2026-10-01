@@ -1,0 +1,39 @@
+CHECKLIST DO ROADMAP — AUTOAIBUILDER CODEX-FIRST
+================================================
+
+ESTADO ATUAL
+[x] Validar o luminotécnico do térreo
+[x] Validar o luminotécnico do segundo pavimento
+[x] Registrar correções, coordenadas e evidências
+[x] Manter os arquivos DWG originais intactos
+
+PRÓXIMOS MARCOS
+[x] 1. Consolidar os aprendizados nas referências e testes da skill
+[ ] 2. Concluir a análise completa do arquivo PONTOS TÉRREO
+[ ] 3. Escolher uma tomada média para o primeiro teste no Builder
+[ ] 4. Confirmar peça, amperagem, altura e orientação da tomada
+[ ] 5. Selecionar pontos de controle distribuídos na planta
+[ ] 6. Calibrar as coordenadas DWG × Builder e medir os erros
+[ ] 7. Validar o offset local da peça e sua orientação
+[ ] 8. Lançar uma única tomada em projeto de teste no Builder
+[ ] 9. Desfazer e repetir o lançamento para comprovar a repetibilidade
+[ ] 10. Analisar completamente o arquivo PONTOS 2º PAVIMENTO
+[ ] 11. Executar um pequeno lote supervisionado de pontos aprovados
+[ ] 12. Ampliar a automação para outros pontos elétricos e iluminação
+[ ] 13. Ampliar posteriormente para os pontos hidráulicos
+[ ] 14. Retomar o desenvolvimento funcional do software final
+
+PORTÕES OBRIGATÓRIOS
+[ ] MÁSCARA: ponto identificado e aprovado pelo usuário
+[ ] COORDENADAS: transformação e tolerância aprovadas
+[ ] BUILDER: primeiro lançamento seguro, auditado e repetível
+
+DECISÕES QUE CONTINUAM HUMANAS
+[ ] Confirmar peça e amperagem quando a máscara não for conclusiva
+[ ] Definir a tolerância aceitável de posicionamento
+[ ] Aprovar visualmente cada novo tipo de lançamento
+[ ] Autorizar salvamento, avanço para lote ou projeto de produção
+
+REGRA PRINCIPAL
+Não avançar para automação em lote enquanto um único ponto ainda não estiver
+funcionando de forma segura, correta e repetível.

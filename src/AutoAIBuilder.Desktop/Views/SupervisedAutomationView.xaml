@@ -1,0 +1,361 @@
+<UserControl x:Class="AutoAIBuilder.Desktop.Views.SupervisedAutomationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.Name="Primeira execução supervisionada da automação">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16,12"
+                Background="#0D1D30"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Marco 11.6H.1 — Execução com preservação total"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="Organiza somente pontos e componentes aprovados; não apaga entidades, blocos, layers ou referências."
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               FontSize="9" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <Border Padding="11,5"
+                            Background="#102641"
+                            BorderBrush="{Binding SupervisedStageAccent}"
+                            BorderThickness="1"
+                            CornerRadius="13">
+                        <TextBlock Text="{Binding SupervisedStage}"
+                                   Foreground="{Binding SupervisedStageAccent}"
+                                   FontSize="8"
+                                   FontWeight="SemiBold" />
+                    </Border>
+                    <Button Margin="8,0,0,0"
+                            Content="Atualizar pré-verificação"
+                            Command="{Binding InspectSupervisedAutomationCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.08*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="0.92*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Insumos protegidos"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,13"
+                                       Text="Os caminhos históricos foram localizados automaticamente; você pode substituí-los antes da execução."
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+
+                            <TextBlock Text="DWG original de entrada"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedSourceDwgPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedSourceDwgCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Text="Máscara histórica validada"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedHistoricalMaskPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedHistoricalMaskCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Text="Pontos históricos v07"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedHistoricalPointsPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedHistoricalPointsCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Text="Objetos da legenda já validada"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedLegendObjectsPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedLegendObjectsCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Text="Pasta das rotinas AutoLISP"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedScriptsPath, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedScriptsCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Text="Destino das execuções isoladas"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8" />
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SupervisedOutputRoot, Mode=OneWay}"
+                                         IsReadOnly="True" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Content="Escolher"
+                                        Command="{Binding ChooseSupervisedOutputCommand}"
+                                        Style="{DynamicResource SecondaryButtonStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Portões de segurança"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <ItemsControl Margin="0,10,0,0"
+                                          ItemsSource="{Binding SupervisedAutomationGates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="0,9"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="10"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Margin="0,3,14,0"
+                                                               Text="{Binding Evidence}"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               FontSize="8"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Status}"
+                                                           Foreground="{Binding Accent}"
+                                                           FontSize="8"
+                                                           FontWeight="SemiBold" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer Grid.Column="2"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="16"
+                            BorderBrush="{Binding SupervisedStageAccent}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Background="#0D1D30">
+                        <StackPanel>
+                            <TextBlock Text="Decisão de execução"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding SupervisedSummary}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding SupervisedPlanId, StringFormat=Plano aprovado: {0}}"
+                                       FontSize="8" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="{Binding SupervisedSourceIntegrity}"
+                                       Foreground="#36D17C"
+                                       FontSize="8"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="O botão permanece bloqueado enquanto houver decisões pendentes ou qualquer insumo incompatível."
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8"
+                                       TextWrapping="Wrap" />
+                            <Button Margin="0,16,0,0"
+                                    Content="{Binding SupervisedExecutionButtonText}"
+                                    Command="{Binding ExecuteSupervisedAutomationCommand}"
+                                    Style="{DynamicResource PrimaryButtonStyle}" />
+                            <Button Margin="0,8,0,0"
+                                    Content="Voltar e revisar grupos no 11.6G"
+                                    Command="{Binding OpenAutomationPreviewCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Resultado medido"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Precisão"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Text="{Binding SupervisedAccuracy}"
+                                               Foreground="#36D17C"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Pontos corretos"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Text="{Binding SupervisedCorrectPoints}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Iguais à V06"
+                                               Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="8" />
+                                    <TextBlock Text="{Binding SupervisedHistoricalMatches}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding SupervisedHistoricalIntegrity}"
+                                       Foreground="#36D17C"
+                                       FontSize="8" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SupervisedPreservation}"
+                                       Foreground="#36D17C"
+                                       FontSize="8"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding SupervisedResultPath}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="8"
+                                       TextWrapping="Wrap" />
+                            <Button Margin="0,12,0,0"
+                                    Content="Abrir pasta da execução"
+                                    Command="{Binding OpenSupervisedRunCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,12,0,0"
+                            Padding="16"
+                            Style="{DynamicResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Divergências ponto a ponto"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                            <ItemsControl Margin="0,8,0,0"
+                                          ItemsSource="{Binding SupervisedPointIssues}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="0,7"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Handle, StringFormat=Handle {0}}"
+                                                           FontSize="9"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Status}"
+                                                           Foreground="#FF5D68"
+                                                           FontSize="8" />
+                                                <TextBlock Text="{Binding ExpectedLayer, StringFormat=Esperado: {0}}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="8"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding ActualLayer, StringFormat=Obtido: {0}}"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="8"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Analisar máscara CAD"
+  short_description: "Reconhecer e revisar pontos de um DWG"
+  default_prompt: "Use $analisar-mascara-cad para reconhecer e revisar os pontos desta máscara DWG sem alterar o original."
+

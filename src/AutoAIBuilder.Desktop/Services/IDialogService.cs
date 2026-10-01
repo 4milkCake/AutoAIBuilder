@@ -19,4 +19,14 @@ public interface IDialogService
         string maskName,
         string maskVersion,
         bool activate);
+
+    bool ConfirmApplySemanticCorrection(
+        string sourcePoint,
+        int candidateCount) => false;
+
+    bool ConfirmSupervisedAutomationExecution(
+        string sourceFile,
+        string historicalMask,
+        string outputRoot,
+        int expectedPoints) => false;
 }

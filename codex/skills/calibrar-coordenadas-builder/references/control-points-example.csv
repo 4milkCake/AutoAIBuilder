@@ -1,0 +1,5 @@
+point_id,source_x,source_y,target_x,target_y,role
+P1,0,0,100,200,FIT
+P2,1000,0,1100,200,FIT
+P3,0,1000,100,1200,FIT
+P4,500,500,600,700,VALIDATION

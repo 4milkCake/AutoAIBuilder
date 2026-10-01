@@ -117,6 +117,34 @@ reflexão, script ou processo externo.
 
 Máscaras gráficas, adaptadores CAD e agentes continuam desconectados.
 
+O Marco 11.6F adiciona `LegacyAutomationBridgeService` fora da fronteira de
+execução. O serviço faz somente análise estática de arquivos `.lsp` com limite
+de tamanho, extrai os comandos `c:`, calcula SHA-256 antes e depois da leitura e
+produz um inventário imutável. Ele não avalia expressões AutoLISP e não possui
+dependência de AutoCAD. Operações mutáveis detectadas são classificadas como
+`DrawingMutationBlocked`.
+
+A ponte cria em memória os contratos
+`autoaibuilder.identificacao-pontos@0.1.0` e
+`autoaibuilder.criacao-mascara@0.1.0`. Eles não são registrados no
+`AutomationAdapterRegistry`; portanto, não podem chegar ao motor de execução.
+O plano visível usa o `SemanticWorkspaceSnapshot` somente para simular
+contagens e ações. A futura aplicação sobre cópia técnica continua reservada ao
+Marco 11.6H, após a pré-visualização aprovável do 11.6G.
+
+O Marco 11.6G adiciona `AutomationPreviewService` e
+`SqliteAutomationPreviewDecisionRepository`. O serviço combina o
+`SemanticWorkspaceSnapshot` com o `CadVisualizationSnapshot`, recalcula o
+SHA-256 do DWG em modo somente leitura e cria um plano determinístico. A camada
+desktop apresenta duas instâncias do mesmo visualizador: uma sem sobreposições
+e outra com o grupo selecionado.
+
+As decisões ficam na tabela `AutomationPreviewDecisions`, introduzida pelo
+esquema SQLite 8. A chave lógica é `(PlanId, GroupId)`, portanto uma alteração
+na origem gera outro plano e impede o reaproveitamento silencioso de aprovações.
+Essa persistência é somente auditoria; o serviço não está registrado como
+adaptador e não possui método de execução.
+
 ## Diagnóstico e falhas
 
 Eventos de ciclo de vida, avisos, erros e exceções globais são registrados sem

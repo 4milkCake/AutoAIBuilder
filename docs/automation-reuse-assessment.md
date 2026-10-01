@@ -7,8 +7,11 @@ no ChatGPT Work. Seu primeiro objetivo é preservar a lógica já validada,
 identificar as lacunas e adaptá-la à fronteira segura criada nos marcos 11.4 a
 11.6B.
 
-Esta avaliação é somente de leitura. Ela não importa máscaras, não executa
-scripts, não controla aplicativos CAD e não altera arquivos de origem.
+Esta avaliação começou somente em leitura. Após o recebimento do contexto
+oficial e a inspeção dos artefatos reais, o Marco 11.6C avançou para a ponte
+semântica documentada em [semantic-bridge.md](semantic-bridge.md). Ela importa
+somente os CSVs selecionados para o banco local; não executa scripts, não
+controla aplicativos CAD e não altera arquivos de origem.
 
 ## Levantamento local realizado
 
@@ -22,21 +25,19 @@ Foram examinados:
 - registro interno de adaptadores;
 - pasta temporária `.tmp.driveupload`, apenas para identificação de natureza.
 
-Resultado:
+Resultado atualizado:
 
-- não há exportação da conversa do ChatGPT Work;
-- não há prompts funcionais da automação anterior;
-- não há catálogo real de regras de tomadas, pontos elétricos ou hidráulicos;
-- não há exemplos reais de entrada e saída;
-- não há scripts, macros ou código da automação anterior;
-- não há máscara real catalogada;
-- o histórico Git contém somente a infraestrutura criada no AutoAIBuilder;
-- `.tmp.driveupload` contém fragmentos temporários de compilação, MSBuild e
-  restauração NuGet. Ela não é fonte da automação e permanece intacta e fora do
-  Git.
-
-Portanto, o conteúdo funcional da automação anterior ainda não está disponível
-neste espaço de trabalho.
+- o contexto oficial de transferência está em
+  `docs/AutoAIBuilder_Contexto_Transferencia_Codex.md`;
+- as rotinas AutoLISP históricas foram localizadas na pasta `Automacao_CAD`;
+- os CSVs reais v07/v081 foram localizados e inspecionados;
+- a linha de base contém 272 pontos, 100 componentes, 35 camadas semânticas e
+  38 diagnósticos de direção;
+- 196 pontos são elétricos e 76 são hidráulicos;
+- 2 direções precisam de revisão, 15 deslocamentos foram validados no Builder
+  e 23 foram inferidos por simetria;
+- os CSVs passam por regressão automatizada sem serem modificados;
+- scripts e aplicativos CAD continuam fora da execução deste marco.
 
 ## Inventário do que já pode ser reutilizado
 
@@ -52,8 +53,8 @@ neste espaço de trabalho.
 | Área isolada e cópias verificadas | Pronto | Evitar que o adaptador receba ou altere arquivos originais |
 | Auditoria SQLite | Pronto | Registrar avaliação, adaptador, contrato, hash e resultado |
 | Piloto de cópia verificada | Pronto | Servir de referência técnica, não de substituto da automação real |
-| Lógica funcional do ChatGPT Work | Ausente localmente | Deve ser fornecida e decomposta, sem reescrita prematura |
-| Casos reais de regressão | Ausentes localmente | Devem ser fornecidos para comparar o novo resultado ao resultado já conhecido |
+| Lógica funcional do ChatGPT Work | Contexto e artefatos localizados | Reaproveitada gradualmente, começando pelos dados estruturados v07/v081 |
+| Casos reais de regressão | Disponíveis e auditados | Verificam automaticamente a linha de base 272/196/76/100/35/38/2 |
 | Integração CAD | Não implementada | Será analisada separadamente; continua bloqueada nesta fase |
 
 ## Mapa de incorporação
@@ -140,16 +141,8 @@ separada da análise funcional.
 
 ## Estado atual da decisão
 
-O AutoAIBuilder está tecnicamente preparado para receber o material e realizar
-a análise. O início da conversão funcional depende apenas da disponibilização
-dos artefatos produzidos no ChatGPT Work.
-
-Até que esses artefatos sejam recebidos:
-
-- nenhum adaptador real deve ser criado por suposição;
-- nenhuma regra de tomada ou hidráulica deve ser inventada;
-- nenhuma máscara deve ser considerada homologada;
-- a execução de máscaras catalogadas deve permanecer bloqueada.
-
-O pacote mínimo necessário está definido em
-[Recepção da automação existente](automation-source-intake.md).
+Os artefatos foram recebidos e a primeira conversão funcional foi concluída:
+os CSVs v07/v081 alimentam o novo módulo de análise semântica. Nenhum adaptador
+CAD real foi criado, nenhuma regra foi inventada por suposição e a execução de
+máscaras catalogadas continua bloqueada. O passo seguinte é aprofundar a
+revisão e registrar correções versionadas antes de qualquer geração de máscara.

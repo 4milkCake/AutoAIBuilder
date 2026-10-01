@@ -1862,6 +1862,36 @@
                                Margin="12"
                                Visibility="{Binding MasksVisibility}" />
 
+        <views:AutomationBridgeView Grid.Row="1"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="2"
+                                    Margin="12"
+                                    Visibility="{Binding AutomationBridgeVisibility}" />
+
+        <views:AutomationPreviewView Grid.Row="1"
+                                     Grid.Column="1"
+                                     Grid.ColumnSpan="2"
+                                     Margin="12"
+                                     Visibility="{Binding AutomationPreviewVisibility}" />
+
+        <views:SupervisedAutomationView Grid.Row="1"
+                                        Grid.Column="1"
+                                        Grid.ColumnSpan="2"
+                                        Margin="12"
+                                        Visibility="{Binding AutomationSupervisedVisibility}" />
+
+        <views:RecognitionView Grid.Row="1"
+                               Grid.Column="1"
+                               Grid.ColumnSpan="2"
+                               Margin="12"
+                               Visibility="{Binding RecognitionVisibility}" />
+
+        <views:SemanticReviewView Grid.Row="1"
+                                  Grid.Column="1"
+                                  Grid.ColumnSpan="2"
+                                  Margin="12"
+                                  Visibility="{Binding SemanticReviewVisibility}" />
+
         <!-- Right status rail -->
         <Grid Grid.Row="1"
               Grid.Column="2"

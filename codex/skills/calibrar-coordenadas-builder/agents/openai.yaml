@@ -1,0 +1,5 @@
+interface:
+  display_name: "Calibrar coordenadas Builder"
+  short_description: "Calibrar DWG, Builder e offsets locais"
+  default_prompt: "Use $calibrar-coordenadas-builder para validar a transformação entre os pontos WCS do DWG e o Builder."
+

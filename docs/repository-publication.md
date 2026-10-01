@@ -40,9 +40,9 @@ os candidatos nem entre os blobs históricos; não foi necessário Git LFS.
   continua com a configuração normal, sem essa alteração.
 - Nenhuma integração com AutoCAD/Builder foi executada nesta preparação.
 
-## Etapa externa pendente
+## Publicação
 
 O repositório privado `https://github.com/4milkCake/AutoAIBuilder` foi criado,
-e o remote `origin` foi configurado. O push depende da autenticação do Git no
-Windows; o convite de Pablo depende da identificação de sua conta.
-Este documento registra a preparação e não confirma o estado remoto do código.
+e o remote `origin` foi configurado. Após autorização explícita do Git Credential
+Manager, o commit de consolidação `48a2303` foi enviado à branch `main` em
+01/10/2026. O convite de Pablo permanece pendente da identificação de sua conta.
